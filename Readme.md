@@ -1,7 +1,7 @@
-# TeamID-SampleProject
-This is a template for CS411 project repository. Please make sure that your title follows the convention: [TeamID]-[YourTeamName]. All TeamID should have a three digit coding (i.e. if you are team 20, you should have `team020` as your ID.). You should also make sure that your url for this repository is [fa26-cs411-team000-teamname] so TAs can correctly clone your repository and keep them up-to-date.
+# team058-team58
+# fa26-cs411-team058-team58
 
-Once you setup your project, please remember to submit your team formation to the team form.
+
 
 ## Permission
 You should set the repository to private and add your team members as collaborators.
