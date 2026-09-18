@@ -1,4 +1,4 @@
-# team058-team58
+# team058-JOINTheDarkSide
 
 ## Basic Information
 
@@ -19,10 +19,10 @@
 
 | Info       | Description                                                    |
 | ---------- | -------------------------------------------------------------- |
-| Title      | ProjectTitle                                                   |
+| Title      | Lights out Trivia                                                   |
 | System URL | https://github.com/cs411-alawini/fa26-cs411-team058-team58.git |
 | Video Link | link_to_video                                                  |
 
 ## Project Summary
 
-This is a summary of the project!
+A web based F1 trivia platform built on historical race dataset. Questions will be dynamically generated from the dataset, essentially a never ending trivia game. The platform will allow users to create an account, play trivia, and track their scores on a leaderboard. The platform will also allow users to build their own questions, challende friends and compete on a leaderboard.
