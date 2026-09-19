@@ -5,7 +5,7 @@
 | Info     | Description                                           |
 | -------- | ----------------------------------------------------- |
 | TeamID   | Team-058                                              |
-| TeamName | team58                                                |
+| TeamName | JOINtheDarkSide                                                |
 | Captain  | dkdoshi2                                              |
 | Captain  | [dkdoshi2@illinois.edu](mailto:dkdoshi2@illinois.edu) |
 | Member1  | kbalaji4                                              |
