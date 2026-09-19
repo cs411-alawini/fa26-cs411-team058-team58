@@ -19,7 +19,7 @@
 
 | Info       | Description                                                    |
 | ---------- | -------------------------------------------------------------- |
-| Title      | Lights out Trivia                                                   |
+| Title      | Lights Out Trivia                                                   |
 | System URL | https://github.com/cs411-alawini/fa26-cs411-team058-team58.git |
 | Video Link | link_to_video                                                  |
 
