@@ -25,4 +25,13 @@
 
 ## Project Summary
 
-A web based F1 trivia platform built on historical race dataset. Questions will be dynamically generated from the dataset, essentially a never ending trivia game. The platform will allow users to create an account, play trivia, and track their scores on a leaderboard. The platform will also allow users to build their own questions, challenge friends and compete on a leaderboard.
+Our project is a Formula 1 trivia website that generates questions using real F1 data instead of 
+relying on a fixed list of questions. A problem with most trivia websites is that after playing them 
+a few times, users start seeing the same questions again. We want to avoid that by generating 
+questions from data about races, drivers, constructors, standings, qualifying, lap times, and 
+other F1 statistics. 
+Users will be able to play generated quizzes, choose topics such as a specific driver, team, or 
+era, create their own quizzes, save questions they like, and compete on leaderboards. Since the 
+questions come from the data in our database, we can also update the application as new races 
+happen instead of having to manually rewrite questions and answers whenever a record 
+changes
