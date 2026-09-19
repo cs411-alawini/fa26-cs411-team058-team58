@@ -1,4 +1,4 @@
-# team058-JOINTheDarkSide
+# team058-JOINtheDarkSide
 
 ## Basic Information
 
