@@ -1,0 +1,99 @@
+Table	Op	Msg_type	Msg_text
+lights_out_trivia.Lap	analyze	status	OK
+lights_out_trivia.Race	analyze	status	OK
+lights_out_trivia.Driver	analyze	status	OK
+experiment
+R0 REWRITE BASELINE - EXISTING INDEXES ONLY
+EXPLAIN
+-> Limit: 15 row(s)  (actual time=308..308 rows=15 loops=1)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=308..308 rows=15 loops=1)
+        -> Table scan on <temporary>  (actual time=308..308 rows=50 loops=1)
+            -> Aggregate using temporary table  (actual time=308..308 rows=50 loops=1)
+                -> Nested loop inner join  (cost=9.84e+6 rows=44922) (actual time=145..308 rows=544 loops=1)
+                    -> Nested loop inner join  (cost=562266 rows=44922) (actual time=145..307 rows=544 loops=1)
+                        -> Nested loop inner join  (cost=203189 rows=544) (actual time=145..145 rows=544 loops=1)
+                            -> Table scan on best  (cost=90820..90830 rows=544) (actual time=145..145 rows=544 loops=1)
+                                -> Materialize  (cost=90820..90820 rows=544) (actual time=145..145 rows=544 loops=1)
+                                    -> Group aggregate: min(Lap.lapTimeMs)  (cost=90766 rows=544) (actual time=0.946..144 rows=544 loops=1)
+                                        -> Index scan on Lap using PRIMARY  (cost=45844 rows=449220) (actual time=0.836..114 rows=589081 loops=1)
+                            -> Single-row index lookup on r using PRIMARY (raceId=best.raceId)  (cost=0.25 rows=1) (actual time=0.00129..0.00131 rows=1 loops=544)
+                        -> Filter: (l.lapTimeMs = best.bestLapTimeMs)  (cost=0.699 rows=82.6) (actual time=0.131..0.297 rows=1 loops=544)
+                            -> Index lookup on l using PRIMARY (raceId=best.raceId)  (cost=0.699 rows=826) (actual time=0.0306..0.251 rows=1083 loops=544)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=984e-6..0.001 rows=1 loops=544)
+
+experiment
+RA REWRITE DESIGN A: Lap(raceId, lapTimeMs)
+EXPLAIN
+-> Limit: 15 row(s)  (actual time=154..154 rows=15 loops=1)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=154..154 rows=15 loops=1)
+        -> Table scan on <temporary>  (actual time=154..154 rows=50 loops=1)
+            -> Aggregate using temporary table  (actual time=154..154 rows=50 loops=1)
+                -> Nested loop inner join  (cost=1041 rows=543) (actual time=151..154 rows=544 loops=1)
+                    -> Nested loop inner join  (cost=851 rows=543) (actual time=151..153 rows=544 loops=1)
+                        -> Nested loop inner join  (cost=254 rows=543) (actual time=151..151 rows=544 loops=1)
+                            -> Filter: (best.bestLapTimeMs is not null)  (cost=786..63.6 rows=543) (actual time=151..151 rows=544 loops=1)
+                                -> Table scan on best  (cost=787..797 rows=543) (actual time=151..151 rows=544 loops=1)
+                                    -> Materialize  (cost=787..787 rows=543) (actual time=151..151 rows=544 loops=1)
+                                        -> Covering index skip scan for grouping on Lap using idx_q4_rewrite_a  (cost=733 rows=543) (actual time=0.557..150 rows=544 loops=1)
+                            -> Single-row index lookup on r using PRIMARY (raceId=best.raceId)  (cost=0.25 rows=1) (actual time=0.00118..0.0012 rows=1 loops=544)
+                        -> Covering index lookup on l using idx_q4_rewrite_a (raceId=best.raceId, lapTimeMs=best.bestLapTimeMs)  (cost=1 rows=1) (actual time=0.00285..0.00326 rows=1 loops=544)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=881e-6..901e-6 rows=1 loops=544)
+
+experiment
+RB REWRITE DESIGN B: Lap(lapTimeMs, raceId)
+EXPLAIN
+-> Limit: 15 row(s)  (actual time=263..263 rows=15 loops=1)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=263..263 rows=15 loops=1)
+        -> Table scan on <temporary>  (actual time=263..263 rows=50 loops=1)
+            -> Aggregate using temporary table  (actual time=263..263 rows=50 loops=1)
+                -> Nested loop inner join  (cost=859136 rows=449220) (actual time=143..262 rows=544 loops=1)
+                    -> Nested loop inner join  (cost=701909 rows=449220) (actual time=143..262 rows=544 loops=1)
+                        -> Nested loop inner join  (cost=207767 rows=449220) (actual time=142..143 rows=544 loops=1)
+                            -> Filter: (best.bestLapTimeMs is not null)  (cost=90820..50540 rows=449220) (actual time=142..142 rows=544 loops=1)
+                                -> Table scan on best  (cost=90820..90830 rows=544) (actual time=142..142 rows=544 loops=1)
+                                    -> Materialize  (cost=90820..90820 rows=544) (actual time=142..142 rows=544 loops=1)
+                                        -> Group aggregate: min(Lap.lapTimeMs)  (cost=90766 rows=544) (actual time=0.96..142 rows=544 loops=1)
+                                            -> Index scan on Lap using PRIMARY  (cost=45844 rows=449220) (actual time=0.854..112 rows=589081 loops=1)
+                            -> Single-row index lookup on r using PRIMARY (raceId=best.raceId)  (cost=0.25 rows=1) (actual time=0.00139..0.00141 rows=1 loops=544)
+                        -> Covering index lookup on l using idx_q4_rewrite_b (lapTimeMs=best.bestLapTimeMs, raceId=best.raceId)  (cost=1 rows=1) (actual time=0.217..0.218 rows=1 loops=544)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=0.00125..0.00127 rows=1 loops=544)
+
+experiment
+RC REWRITE DESIGN C: Lap(raceId, driverId, lapTimeMs)
+EXPLAIN
+-> Limit: 15 row(s)  (actual time=519..519 rows=15 loops=1)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=519..519 rows=15 loops=1)
+        -> Table scan on <temporary>  (actual time=519..519 rows=50 loops=1)
+            -> Aggregate using temporary table  (actual time=519..519 rows=50 loops=1)
+                -> Nested loop inner join  (cost=10.6e+6 rows=42948) (actual time=363..518 rows=544 loops=1)
+                    -> Nested loop inner join  (cost=1.78e+6 rows=42948) (actual time=363..517 rows=544 loops=1)
+                        -> Nested loop inner join  (cost=203189 rows=544) (actual time=363..364 rows=544 loops=1)
+                            -> Table scan on best  (cost=90820..90830 rows=544) (actual time=363..363 rows=544 loops=1)
+                                -> Materialize  (cost=90820..90820 rows=544) (actual time=363..363 rows=544 loops=1)
+                                    -> Group aggregate: min(Lap.lapTimeMs)  (cost=90766 rows=544) (actual time=3.74..363 rows=544 loops=1)
+                                        -> Covering index scan on Lap using idx_q4_rewrite_c  (cost=45844 rows=449220) (actual time=3.61..332 rows=589081 loops=1)
+                            -> Single-row index lookup on r using PRIMARY (raceId=best.raceId)  (cost=0.25 rows=1) (actual time=0.00141..0.00143 rows=1 loops=544)
+                        -> Filter: (l.lapTimeMs = best.bestLapTimeMs)  (cost=3.4 rows=78.9) (actual time=0.111..0.282 rows=1 loops=544)
+                            -> Covering index lookup on l using idx_q4_rewrite_c (raceId=best.raceId)  (cost=3.4 rows=789) (actual time=0.026..0.23 rows=1083 loops=544)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=0.00104..0.00106 rows=1 loops=544)
+
+status
+R END - ALL REWRITE EXPERIMENTAL INDEXES REMOVED
+evidence_label
+REWRITTEN Q4 - TOP 15 RESULTS (COMPARE WITH SAVED ORIGINAL Q4)
+forename	surname	fastestLaps	firstYear	lastYear
+Lewis	Hamilton	66	2007	2024
+Michael	Schumacher	54	1996	2012
+Kimi	Räikkönen	45	2002	2018
+Sebastian	Vettel	38	2009	2019
+Max	Verstappen	35	2016	2024
+Fernando	Alonso	26	2003	2024
+Mika	Häkkinen	25	1997	2001
+Nico	Rosberg	20	2006	2016
+Valtteri	Bottas	19	2014	2021
+Mark	Webber	19	2009	2013
+Rubens	Barrichello	17	2000	2009
+Daniel	Ricciardo	17	2014	2024
+Felipe	Massa	15	2006	2014
+David	Coulthard	14	1997	2002
+Juan	Pablo Montoya	13	2001	2005
