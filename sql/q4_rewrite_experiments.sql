@@ -2,13 +2,12 @@
 -- Baselines were measured before the selected final indexes were deployed.
 -- Exact reproduction requires an equivalent pre-final-index state or a separate test database.
 -- Do not drop the deployed final indexes to recreate these historical experiments.
--- CS 411 Team 058: Q4 REWRITTEN query, separate supplementary experiment.
+-- CS 411 Team 058: final Q4 Fastest Lap Specialists indexing configurations.
 
--- This is NOT the original Q4 query. Compare rewrite baseline with rewrite indexed designs.
+-- Compare the final Q4 baseline with Designs A, B, and C.
 
--- The derived table computes one minimum per race; ties are retained as in original Q4.
+-- The derived table computes one minimum per race; ties are retained.
 
--- Requires idx_q4_probe to be absent (run original diagnostics fully first).
 
 ANALYZE TABLE Lap, Race, Driver;
 

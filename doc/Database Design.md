@@ -25,7 +25,7 @@ The connection shown was made through the Cloud SQL Auth Proxy.
 
 ## 2. Three selected advanced SQL queries (Q1, Q3, and Q4)
 
-We chose Q1, Q3, and Q4 from the five queries in our original SQL script. These three are relevant to F1 trivia generation, and each uses joins together with grouping or a subquery. We ran each query on MySQL with `LIMIT 15`. All three returned fifteen rows.
+This submission presents three advanced queries for F1 trivia generation: Q1, Q3, and Q4. Each uses joins together with grouping or a subquery. We ran each query on MySQL with `LIMIT 15`. All three returned fifteen rows.
 
 ### Q1. Circuit Kings
 
@@ -89,9 +89,7 @@ LIMIT 15;
 
 ### Q4. Fastest Lap Specialists
 
-This query counts how many times each driver set the fastest lap in a race, along with the first and last years in which they did so. We originally used a correlated subquery that calculated the minimum lap time for each lap record. We changed it to calculate the minimum once per race, then join those values back to `Lap`. The revised query still uses joins and `GROUP BY`. Its recorded top fifteen results matched the original query, including Lewis Hamilton's 66 fastest laps.
-
-The **rewritten SQL below is the Q4 version used in all four official Q4 indexing tests**.
+This final query counts how many times each driver set the fastest lap in a race, along with the first and last years in which they did so. A grouped derived table calculates the minimum lap time once per race and joins those minima back to `Lap`. The query uses joins and `GROUP BY`; its recorded top fifteen results include Lewis Hamilton with 66 fastest laps.
 
 ```sql
 USE lights_out_trivia;
@@ -121,7 +119,7 @@ The displayed rows match the saved rewritten-Q4 result log at `doc/evidence/quer
 
 ## 3. Indexing experiments
 
-For each of the three selected queries, we ran `EXPLAIN ANALYZE` using only the existing indexes and then with three different added index designs. We dropped each experimental index before testing the next design. This gave us twelve official query/index configurations. The supplementary experiments on the old version of Q4 are discussed separately in Section 5.
+For each of the three selected queries, the recorded `EXPLAIN ANALYZE` configurations include a baseline and three additional index designs, for twelve configurations total. The Q4 configurations all use the final Fastest Lap Specialists query shown in Section 2.
 
 In these execution plans, MySQL did not show an estimated cost for the top-level `Limit`, `Sort`, and temporary-table steps. For comparison, we took the **estimated cost of the outermost `Nested loop inner join` iterator**, using the same type of node for each configuration of a given query. These are estimated join costs, not complete-query costs or milliseconds. The actual time is the elapsed time at the top-level `Limit` operator. We measured each configuration once, so timings alone are not enough to establish why a plan performed differently. In the tables, a positive cost-reduction percentage means the estimated join cost decreased; a negative percentage means it increased. Elapsed-time changes are also relative to baseline and are single-run observations.
 
@@ -208,28 +206,13 @@ Both indexes were already created on Cloud SQL before this report. The Q1 screen
 
 The authenticated session output returned two rows for `idx_lap_race_time`, with sequence 1 `raceId` and sequence 2 `lapTimeMs`, both BTREE. The screenshot is a crop of that genuine terminal output; its window width clips the far-right `Visible` field, which read `YES` in the complete query result.
 
-## 5. Additional investigation of the original Q4
+## 5. Evidence and reproducibility
 
-Our original Q4 used a dependent subquery for `MIN(lapTimeMs)`. `EXPLAIN ANALYZE` showed that MySQL executed it 589,081 times, and the query took 151,718 ms. In that first set of indexing tests, the reported estimated join cost remained 412,567 with all three experimental indexes. This result is still useful: adding an index does not guarantee that MySQL will choose it or that the estimated cost will decrease.
+The submitted SQL is in `sql/`: `ddl.sql`, `advanced_queries.sql`, `cs411_stage3_query_results.sql`, `cs411_stage3_indexing_experiments.sql`, `q4_rewrite_experiments.sql`, `cs411_stage3_final_index.sql`, `load_mysql.sql`, and `verify_counts.sql`. Saved plan text is under `doc/evidence/indexing/plans/`; the raw Q4 experiment log is `doc/evidence/indexing/q4_rewrite_results.txt`. Database connection, row counts, query results, and index verification images are under `doc/evidence/`.
 
-We then checked the original query again with `EXPLAIN FORMAT=TREE` without executing it. With an index on `Lap(raceId, lapTimeMs)`, the estimated outer join cost fell to 396,821, about 3.8% lower than 412,567. MySQL chose the composite index without a hint, and forcing the same index did not lower the estimate further. The earlier and later plans differed, but these records do not establish why. We kept these diagnostics separate because the assignment requires `EXPLAIN ANALYZE` for the measured indexing comparisons.
+The populated CSV dataset was generated from the team-provided Kaggle data using the team's ETL with the 1979–2024 filter. It remains in the local `mysql-import/tables/` package rather than being committed; the twelve table counts and Cloud SQL screenshots document the imported database. The import script expects those CSVs in a sibling `tables/` directory when run from the import package root. Application tables remain empty.
 
-The rewritten query ran in 308 ms without a new index, and then in 154 ms with Design A. The large difference from the original 151,718 ms query mainly came from calculating each race minimum once instead of repeatedly. We do not count that change as an index-only improvement. The rewritten query also produced the same fifteen reported results as the original query. The original four plan screenshots and text outputs are retained under `doc/evidence/indexing/original-q4/` and are supplementary only.
-
-### Original-Q4 plan screenshots (supplementary; not the official rewritten-Q4 comparison)
-
-![Original Q4 baseline plan](evidence/indexing/original-q4/screenshots/q4_baseline.png)
-![Original Q4 Design A plan](evidence/indexing/original-q4/screenshots/q4_design_a.png)
-![Original Q4 Design B plan](evidence/indexing/original-q4/screenshots/q4_design_b.png)
-![Original Q4 Design C plan](evidence/indexing/original-q4/screenshots/q4_design_c.png)
-
-## 6. Evidence and reproducibility
-
-The submitted SQL is in `sql/`: `ddl.sql`, `advanced_queries.sql`, `cs411_stage3_query_results.sql`, `cs411_stage3_indexing_experiments.sql`, `q4_rewrite_experiments.sql`, `cs411_stage3_final_index.sql`, `load_mysql.sql`, and `verify_counts.sql`. Saved plan text is under `doc/evidence/indexing/plans/`; the raw rewritten-Q4 log is `doc/evidence/indexing/q4_rewrite_results.txt`; the original-Q4 plan set and diagnostics are under `doc/evidence/indexing/original-q4/`. Database connection, row counts, and query results are under `doc/evidence/`.
-
-The populated CSV dataset was generated from the team-provided Kaggle data using the team's ETL with the 1979–2024 filter. It remains in the local `mysql-import/tables/` package rather than being committed; the 12 table counts and Cloud SQL screenshots document the imported database. The import script expects those CSVs in a sibling `tables/` directory when run from the import package root. Application tables remain empty.
-
-The four Q1 screenshots, four Q3 screenshots, and four rewritten-Q4 screenshots are the twelve official configurations. Original correlated-Q4 screenshots and plans are explicitly supplementary and stored separately. The original saved experiment identifiers are abbreviated as follows: `R0` is the rewritten-Q4 baseline, `RA` is rewritten-Q4 Design A, `RB` is Design B, and `RC` is Design C. The original logs retain these identifiers; the final report and filenames use the clearer Q4 baseline/A/B/C naming convention. The recorded plan bodies, costs, and timings are preserved. Both final indexes are deployed; the Q4 final-index screenshot is a read-only capture of the authenticated MySQL verification query.
+The final indexing evidence consists of four Q1, four Q3, and four rewritten-Q4 configurations. The raw Q4 log uses identifiers `R0` for baseline and `RA`, `RB`, and `RC` for Designs A, B, and C; the report and filenames use the clearer Q4 baseline/A/B/C convention. The saved plans retain the recorded output and measurements. Both selected final indexes are deployed and documented in `sql/cs411_stage3_final_index.sql` with read-only verification commands.
 
 ## Appendix A. DDL commands for all 21 tables
 
