@@ -1,3 +1,7 @@
+-- HISTORICAL EXPERIMENT RECORD; DO NOT RUN AGAINST CURRENT PRODUCTION CLOUD SQL.
+-- Baselines were measured before the selected final indexes were deployed.
+-- Exact reproduction requires an equivalent pre-final-index state or a separate test database.
+-- Do not drop the deployed final indexes to recreate these historical experiments.
 -- CS 411 Team 058: Q4 REWRITTEN query, separate supplementary experiment.
 
 -- This is NOT the original Q4 query. Compare rewrite baseline with rewrite indexed designs.

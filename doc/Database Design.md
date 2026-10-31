@@ -15,7 +15,7 @@ We implemented the Lights Out Trivia database on Google Cloud SQL using MySQL 8.
 | ConstructorStanding | 588 | RaceResult | 19,235 |
 | Lap | 589,081 | PitStop | 11,371 |
 
-We imported **634,176 rows** across the twelve populated tables. The tables `Lap`, `RaceResult`, `PitStop`, and `Qualifying` each exceed the assignment's 1,000-row requirement. The exact `CREATE TABLE` statements used for all 21 tables appear in **Appendix A**.
+We imported **634,176 rows** across the twelve populated tables. Five tables exceed the assignment's 1,000-row requirement: `Qualifying` (10,494), `DriverStanding` (1,324), `RaceResult` (19,235), `Lap` (589,081), and `PitStop` (11,371). The exact `CREATE TABLE` statements used for all 21 tables appear in **Appendix A**.
 
 ![Cloud SQL Auth Proxy connection to MySQL 8.4.11-google and lights_out_trivia](evidence/database/gcp_mysql_connection.png)
 
@@ -200,7 +200,7 @@ CREATE INDEX idx_lap_race_time
 ON Lap(raceId, lapTimeMs);
 ```
 
-Both indexes were already created on Cloud SQL before this report. The Q1 screenshot confirms the visible BTREE on `RaceResult(finishPosition)`. During this audit, a read-only `SHOW INDEX` query on the authenticated MySQL session returned `idx_lap_race_time` on `Lap` with `raceId` then `lapTimeMs`, BTREE, visible YES. The saved Q4 verification screenshot shows the query and index columns; the terminal window clipped the far-right `Visible` field. The final-index SQL file contains only read-only `SHOW INDEX` checks; the documented `CREATE INDEX` definitions are commented out.
+Both indexes were already created on Cloud SQL before this report. The Q1 screenshot confirms the visible BTREE on `RaceResult(finishPosition)`. During this audit, a read-only `SHOW INDEX` query on the authenticated MySQL session returned `idx_lap_race_time` on `Lap` with `raceId` then `lapTimeMs`, BTREE, visible YES. The saved Q4 verification screenshot shows the query and index columns; its far-right `Visible` field is clipped. The final-index SQL file contains only read-only `SHOW INDEX` checks; the documented `CREATE INDEX` definitions are commented out.
 
 ![Verified Q1 final index](evidence/final_index.png)
 
@@ -229,7 +229,7 @@ The submitted SQL is in `sql/`: `ddl.sql`, `advanced_queries.sql`, `cs411_stage3
 
 The populated CSV dataset was generated from the team-provided Kaggle data using the team's ETL with the 1979–2024 filter. It remains in the local `mysql-import/tables/` package rather than being committed; the 12 table counts and Cloud SQL screenshots document the imported database. The import script expects those CSVs in a sibling `tables/` directory when run from the import package root. Application tables remain empty.
 
-The four Q1 screenshots, four Q3 screenshots, and four rewritten-Q4 screenshots are the twelve official configurations. Original correlated-Q4 screenshots and plans are explicitly supplementary and stored separately. The preserved raw rewrite log and plan headers contain experiment-label typos `R0`, `RA`, `RB`, and `RC`; these map to rewritten-Q4 baseline and Designs A, B, and C. The plan files are named accordingly, and the corrected reproducibility SQL and screenshots use the Q4 labels. The recorded plan bodies, costs, and timings are preserved. Both final indexes are deployed; the Q4 final-index screenshot is a read-only capture of the authenticated MySQL verification query.
+The four Q1 screenshots, four Q3 screenshots, and four rewritten-Q4 screenshots are the twelve official configurations. Original correlated-Q4 screenshots and plans are explicitly supplementary and stored separately. The original saved experiment identifiers are abbreviated as follows: `R0` is the rewritten-Q4 baseline, `RA` is rewritten-Q4 Design A, `RB` is Design B, and `RC` is Design C. The original logs retain these identifiers; the final report and filenames use the clearer Q4 baseline/A/B/C naming convention. The recorded plan bodies, costs, and timings are preserved. Both final indexes are deployed; the Q4 final-index screenshot is a read-only capture of the authenticated MySQL verification query.
 
 ## Appendix A. DDL commands for all 21 tables
 

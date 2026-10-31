@@ -1,3 +1,7 @@
+-- HISTORICAL EXPERIMENT RECORD; DO NOT RUN AGAINST CURRENT PRODUCTION CLOUD SQL.
+-- Baselines were measured before the selected final indexes were deployed.
+-- Exact reproduction requires an equivalent pre-final-index state or a separate test database.
+-- Do not drop the deployed final indexes to recreate these historical experiments.
 -- Team 058 Stage 3: THREE-query indexing experiments (Q1, Q3, Q4)
 -- Run only against MySQL 8.4 lights_out_trivia, after importing and verifying data.
 -- Records 12 EXPLAIN ANALYZE plans: baseline + three nondefault designs per query.
