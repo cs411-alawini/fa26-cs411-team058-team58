@@ -1,8 +1,4 @@
--- Lights Out Trivia (Team 058) - Stage 3 DDL
--- Transcribed from the Stage 2 relational schema. Target: MySQL 8.0+.
--- (Also runs unchanged on SQLite, which we used to verify the queries.)
 
--- ---------- Formula 1 data relations ----------
 
 CREATE TABLE Season (
     year    INT PRIMARY KEY,
@@ -154,7 +150,6 @@ CREATE TABLE TelemetrySample (
     FOREIGN KEY (raceId, driverId, lapNumber) REFERENCES Lap(raceId, driverId, lapNumber)
 );
 
--- ---------- Application relations ----------
 
 CREATE TABLE User (
     userId       INT PRIMARY KEY,

@@ -1,5 +1,3 @@
--- Run against lights_out_trivia on MySQL 8.4.
--- Three original queries Q1, Q3, Q4, each already limits results to 15 rows.
 USE lights_out_trivia;
 
 SELECT 'Q1 Circuit Kings - TOP 15 RESULTS' AS evidence_label;
@@ -44,7 +42,7 @@ HAVING COUNT(*) >= 20
 ORDER BY r.year DESC, avgStopSec
 LIMIT 15;
 
-SELECT 'Q4 Fastest Lap Specialists (rewritten SQL) - TOP 15 RESULTS' AS evidence_label;
+SELECT 'Q4 Fastest Lap Specialists - TOP 15 RESULTS' AS evidence_label;
 SELECT d.forename,
        d.surname,
        COUNT(*) AS fastestLaps,

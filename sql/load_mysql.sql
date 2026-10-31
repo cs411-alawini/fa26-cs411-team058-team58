@@ -1,4 +1,3 @@
--- Run from this folder: mysql --local-infile=1 -u <user> -p <db> < load_mysql.sql
 SET FOREIGN_KEY_CHECKS = 0;
 LOAD DATA LOCAL INFILE 'tables/Season.csv' INTO TABLE Season
   FIELDS TERMINATED BY ',' OPTIONALLY ENCLOSED BY '"' LINES TERMINATED BY '\n';

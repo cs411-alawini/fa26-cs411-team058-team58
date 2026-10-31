@@ -1,10 +1,4 @@
--- Lights Out Trivia (Team 058) - Stage 3 advanced queries
--- Each query feeds the dynamic question generator: its rows give the correct
--- answer, and the runners-up are used as the wrong (distractor) options.
 
--- Q1. Circuit Kings: the driver(s) with the most wins at each circuit.
---     "Who has won the most Grands Prix at Monaco?"
---     Concepts: multi-relation JOIN + GROUP BY + correlated subquery in HAVING.
 SELECT c.name    AS circuit,
        d.forename,
        d.surname,
@@ -27,9 +21,6 @@ ORDER BY wins DESC, circuit
 LIMIT 15;
 
 
--- Q2. Poles without wins / wins without poles, per season (2006-2024).
---     "Which driver won a race in 2012 without ever qualifying on pole that year?"
---     Concepts: SET operator (UNION) + JOINs + GROUP BY + NOT EXISTS subqueries.
 SELECT r.year, d.forename, d.surname, 'Pole, no win' AS category, COUNT(*) AS cnt
 FROM Qualifying q
 JOIN Race   r ON r.raceId   = q.raceId
@@ -61,10 +52,6 @@ ORDER BY year DESC, category, cnt DESC
 LIMIT 15;
 
 
--- Q3. Pit crews faster than their season's average (2011-2024).
---     "Which team had the quickest average pit stop in 2019?"
---     Concepts: JOINs + GROUP BY/HAVING + correlated subquery (season average).
---     Stops over 60 s are red-flag stoppages or repairs and are excluded.
 SELECT r.year,
        con.name                        AS constructor,
        COUNT(*)                        AS stops,
@@ -85,9 +72,6 @@ ORDER BY r.year DESC, avgStopSec
 LIMIT 15;
 
 
--- Q4. Fastest-lap specialists: how often each driver set a race's fastest lap.
---     "Who has set the most fastest laps since 1996?"
---     Concepts: JOINs + GROUP BY + derived-table aggregation (per-race minimum lap).
 SELECT d.forename,
        d.surname,
        COUNT(*) AS fastestLaps,
@@ -107,10 +91,6 @@ ORDER BY fastestLaps DESC, d.surname
 LIMIT 15;
 
 
--- Q5. Teammate head-to-head: share of races finished ahead of the teammate.
---     Per season, 2010-2024, at least 15 head-to-heads.
---     "Who beat their teammate most consistently in 2023?"
---     Concepts: self-JOIN of RaceResult + JOINs + GROUP BY/HAVING aggregation.
 SELECT r.year,
        d.forename,
        d.surname,

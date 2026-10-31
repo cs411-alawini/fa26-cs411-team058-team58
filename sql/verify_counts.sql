@@ -1,4 +1,3 @@
--- Check MySQL version and verify the 12 imported tables.
 SELECT VERSION() AS mysql_version;
 SELECT @@local_infile AS local_infile_enabled;
 SELECT 'Season' AS table_name, COUNT(*) AS row_count FROM `Season`;

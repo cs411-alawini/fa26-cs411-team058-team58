@@ -1,13 +1,3 @@
--- HISTORICAL EXPERIMENT RECORD; DO NOT RUN AGAINST CURRENT PRODUCTION CLOUD SQL.
--- Baselines were measured before the selected final indexes were deployed.
--- Exact reproduction requires an equivalent pre-final-index state or a separate test database.
--- Do not drop the deployed final indexes to recreate these historical experiments.
--- Team 058 Stage 3: THREE-query indexing experiments (Q1, Q3, Q4)
--- Run only against MySQL 8.4 lights_out_trivia, after importing and verifying data.
--- Records 12 EXPLAIN ANALYZE plans: baseline + three nondefault designs per query.
--- Each design is tested ALONE, then removed before the next design.
--- This script does NOT modify any row data and does not drop any existing index.
--- If an error occurs, stop and check SHOW INDEX before restarting.
 USE lights_out_trivia;
 SELECT 'SERVER AND ORIGINAL INDEXES' AS phase, VERSION() AS mysql_version;
 SHOW INDEX FROM RaceResult;
@@ -15,7 +5,6 @@ SHOW INDEX FROM PitStop;
 SHOW INDEX FROM Lap;
 ANALYZE TABLE RaceResult, Race, Circuit, Driver, PitStop, Constructor, Lap;
 
--- ============ QUERY 1: BASELINE ============
 SELECT 'Q1 BASELINE' AS experiment;
 EXPLAIN ANALYZE SELECT c.name    AS circuit,
        d.forename,
@@ -38,7 +27,6 @@ HAVING COUNT(*) = (SELECT COUNT(*)
 ORDER BY wins DESC, circuit
 LIMIT 15;
 
--- ------------ QUERY 1: INDEX A (Index winning position) ------------
 CREATE INDEX idx_s3_q1_a ON RaceResult(finishPosition);
 SELECT 'Q1 DESIGN A: idx_s3_q1_a ON RaceResult(finishPosition)' AS experiment;
 EXPLAIN ANALYZE SELECT c.name    AS circuit,
@@ -63,7 +51,6 @@ ORDER BY wins DESC, circuit
 LIMIT 15;
 DROP INDEX idx_s3_q1_a ON RaceResult;
 
--- ------------ QUERY 1: INDEX B (Add race join field) ------------
 CREATE INDEX idx_s3_q1_b ON RaceResult(finishPosition, raceId);
 SELECT 'Q1 DESIGN B: idx_s3_q1_b ON RaceResult(finishPosition, raceId)' AS experiment;
 EXPLAIN ANALYZE SELECT c.name    AS circuit,
@@ -88,7 +75,6 @@ ORDER BY wins DESC, circuit
 LIMIT 15;
 DROP INDEX idx_s3_q1_b ON RaceResult;
 
--- ------------ QUERY 1: INDEX C (Compare alternative composite key order) ------------
 CREATE INDEX idx_s3_q1_c ON RaceResult(finishPosition, driverId, raceId);
 SELECT 'Q1 DESIGN C: idx_s3_q1_c ON RaceResult(finishPosition, driverId, raceId)' AS experiment;
 EXPLAIN ANALYZE SELECT c.name    AS circuit,
@@ -113,7 +99,6 @@ ORDER BY wins DESC, circuit
 LIMIT 15;
 DROP INDEX idx_s3_q1_c ON RaceResult;
 
--- ============ QUERY 3: BASELINE ============
 SELECT 'Q3 BASELINE' AS experiment;
 EXPLAIN ANALYZE SELECT r.year,
        con.name                        AS constructor,
@@ -134,7 +119,6 @@ HAVING COUNT(*) >= 20
 ORDER BY r.year DESC, avgStopSec
 LIMIT 15;
 
--- ------------ QUERY 3: INDEX A (Filter stop duration) ------------
 CREATE INDEX idx_s3_q3_a ON PitStop(durationMs);
 SELECT 'Q3 DESIGN A: idx_s3_q3_a ON PitStop(durationMs)' AS experiment;
 EXPLAIN ANALYZE SELECT r.year,
@@ -157,7 +141,6 @@ ORDER BY r.year DESC, avgStopSec
 LIMIT 15;
 DROP INDEX idx_s3_q3_a ON PitStop;
 
--- ------------ QUERY 3: INDEX B (Filter first, race join second) ------------
 CREATE INDEX idx_s3_q3_b ON PitStop(durationMs, raceId);
 SELECT 'Q3 DESIGN B: idx_s3_q3_b ON PitStop(durationMs, raceId)' AS experiment;
 EXPLAIN ANALYZE SELECT r.year,
@@ -180,7 +163,6 @@ ORDER BY r.year DESC, avgStopSec
 LIMIT 15;
 DROP INDEX idx_s3_q3_b ON PitStop;
 
--- ------------ QUERY 3: INDEX C (Race join first, duration filter second) ------------
 CREATE INDEX idx_s3_q3_c ON PitStop(raceId, durationMs);
 SELECT 'Q3 DESIGN C: idx_s3_q3_c ON PitStop(raceId, durationMs)' AS experiment;
 EXPLAIN ANALYZE SELECT r.year,
@@ -203,9 +185,7 @@ ORDER BY r.year DESC, avgStopSec
 LIMIT 15;
 DROP INDEX idx_s3_q3_c ON PitStop;
 
--- ============ QUERY 4: REWRITTEN Q4 BASELINE ============
--- One per-race minimum is materialized, then matched back to Lap. Ties are retained.
-SELECT 'Q4 REWRITE BASELINE' AS experiment;
+SELECT 'Q4 BASELINE' AS experiment;
 EXPLAIN ANALYZE
 SELECT d.forename,
        d.surname,
@@ -225,9 +205,8 @@ GROUP BY d.driverId, d.forename, d.surname
 ORDER BY fastestLaps DESC, d.surname
 LIMIT 15;
 
--- ------------ QUERY 4: REWRITE DESIGN A ------------
-CREATE INDEX idx_q4_rewrite_a ON Lap(raceId, lapTimeMs);
-SELECT 'Q4 REWRITE DESIGN A: Lap(raceId, lapTimeMs)' AS experiment;
+CREATE INDEX idx_q4_a ON Lap(raceId, lapTimeMs);
+SELECT 'Q4 DESIGN A: Lap(raceId, lapTimeMs)' AS experiment;
 EXPLAIN ANALYZE
 SELECT d.forename,
        d.surname,
@@ -247,11 +226,10 @@ GROUP BY d.driverId, d.forename, d.surname
 ORDER BY fastestLaps DESC, d.surname
 LIMIT 15;
 
-DROP INDEX idx_q4_rewrite_a ON Lap;
+DROP INDEX idx_q4_a ON Lap;
 
--- ------------ QUERY 4: REWRITE DESIGN B ------------
-CREATE INDEX idx_q4_rewrite_b ON Lap(lapTimeMs, raceId);
-SELECT 'Q4 REWRITE DESIGN B: Lap(lapTimeMs, raceId)' AS experiment;
+CREATE INDEX idx_q4_b ON Lap(lapTimeMs, raceId);
+SELECT 'Q4 DESIGN B: Lap(lapTimeMs, raceId)' AS experiment;
 EXPLAIN ANALYZE
 SELECT d.forename,
        d.surname,
@@ -271,11 +249,10 @@ GROUP BY d.driverId, d.forename, d.surname
 ORDER BY fastestLaps DESC, d.surname
 LIMIT 15;
 
-DROP INDEX idx_q4_rewrite_b ON Lap;
+DROP INDEX idx_q4_b ON Lap;
 
--- ------------ QUERY 4: REWRITE DESIGN C ------------
-CREATE INDEX idx_q4_rewrite_c ON Lap(raceId, driverId, lapTimeMs);
-SELECT 'Q4 REWRITE DESIGN C: Lap(raceId, driverId, lapTimeMs)' AS experiment;
+CREATE INDEX idx_q4_c ON Lap(raceId, driverId, lapTimeMs);
+SELECT 'Q4 DESIGN C: Lap(raceId, driverId, lapTimeMs)' AS experiment;
 EXPLAIN ANALYZE
 SELECT d.forename,
        d.surname,
@@ -295,6 +272,6 @@ GROUP BY d.driverId, d.forename, d.surname
 ORDER BY fastestLaps DESC, d.surname
 LIMIT 15;
 
-DROP INDEX idx_q4_rewrite_c ON Lap;
+DROP INDEX idx_q4_c ON Lap;
 
 SELECT 'END: all experimental indexes removed' AS result;
