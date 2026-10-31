@@ -1,0 +1,38 @@
+Q1 DESIGN B: idx_s3_q1_b ON RaceResult(finishPosition, raceId)
+MySQL 8.4 EXPLAIN ANALYZE, captured from original experiment run.
+
+EXPLAIN ANALYZE
+SELECT c.name    AS circuit,
+       d.forename,
+       d.surname,
+       COUNT(*)  AS wins
+FROM RaceResult rr
+JOIN Race    r ON r.raceId    = rr.raceId
+JOIN Circuit c ON c.circuitId = r.circuitId
+JOIN Driver  d ON d.driverId  = rr.driverId
+WHERE rr.finishPosition = 1
+GROUP BY c.circuitId, c.name, d.driverId, d.forename, d.surname
+HAVING COUNT(*) = (SELECT COUNT(*)
+                   FROM RaceResult rr2
+                   JOIN Race r2 ON r2.raceId = rr2.raceId
+                   WHERE rr2.finishPosition = 1
+                     AND r2.circuitId = c.circuitId
+                   GROUP BY rr2.driverId
+                   ORDER BY COUNT(*) DESC
+                   LIMIT 1)
+ORDER BY wins DESC, circuit
+LIMIT 15;
+
+=== CAPTURED MYSQL EXECUTION PLAN ===
+-> Limit: 15 row(s)  (actual time=32.2..32.3 rows=15 loops=1)
+    -> Sort: wins DESC, c.`name`  (actual time=32.2..32.3 rows=15 loops=1)
+        -> Filter: (`count(0)` = `(select #2)`)  (actual time=32.1..32.2 rows=81 loops=1)
+            -> Table scan on <temporary>  (actual time=32.1..32.2 rows=460 loops=1)
+                -> Aggregate using temporary table  (actual time=32.1..32.1 rows=460 loops=1)
+                    -> Nested loop inner join  (cost=936 rows=812) (actual time=0.0458..2.81 rows=812 loops=1)
+                        -> Nested loop inner join  (cost=652 rows=812) (actual time=0.0414..2.08 rows=812 loops=1)
+                            -> Nested loop inner join  (cost=368 rows=812) (actual time=0.0382..1.3 rows=812 loops=1)
+                                -> Covering index lookup on rr using idx_s3_q1_b (finishPosition=1)  (cost=83.8 rows=812) (actual time=0.031..0.188 rows=812 loops=1)
+                                -> Single-row index lookup on r using PRIMARY (raceId=rr.raceId)  (cost=0.25 rows=1) (actual time=0.00122..0.00124 rows=1 loops=812)
+                            -> Single-row index lookup on c using PRIMARY (circuitId=r.circuitId)  (cost=0.25 rows=1) (actual time=819e-6..839e-6 rows=1 loops=812)
+                        -> Single-row index lookup on d using PRIMARY (driverId=rr.driverId)  (cost=0.25 rows=1) (actual time=755e-6..781e-6 rows=1 loops=812)

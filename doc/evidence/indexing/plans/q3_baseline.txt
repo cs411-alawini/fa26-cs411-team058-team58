@@ -1,0 +1,37 @@
+Q3 BASELINE
+MySQL 8.4 EXPLAIN ANALYZE, captured from original experiment run.
+
+EXPLAIN ANALYZE
+SELECT r.year,
+       con.name                        AS constructor,
+       COUNT(*)                        AS stops,
+       ROUND(AVG(ps.durationMs) / 1000, 3) AS avgStopSec
+FROM PitStop ps
+JOIN RaceResult  rr  ON rr.raceId = ps.raceId AND rr.driverId = ps.driverId
+JOIN Race        r   ON r.raceId  = ps.raceId
+JOIN Constructor con ON con.constructorId = rr.constructorId
+WHERE ps.durationMs < 60000
+GROUP BY r.year, con.constructorId, con.name
+HAVING COUNT(*) >= 20
+   AND AVG(ps.durationMs) < (SELECT AVG(ps2.durationMs)
+                             FROM PitStop ps2
+                             JOIN Race r2 ON r2.raceId = ps2.raceId
+                             WHERE r2.year = r.year
+                               AND ps2.durationMs < 60000)
+ORDER BY r.year DESC, avgStopSec
+LIMIT 15;
+
+=== CAPTURED MYSQL EXECUTION PLAN ===
+-> Limit: 15 row(s)  (actual time=77..77 rows=15 loops=1)
+    -> Sort: r.`year` DESC, avgStopSec  (actual time=77..77 rows=15 loops=1)
+        -> Filter: ((`count(0)` >= 20) and (??? < `(select #2)`))  (actual time=76.9..76.9 rows=84 loops=1)
+            -> Table scan on <temporary>  (actual time=76.9..76.9 rows=147 loops=1)
+                -> Aggregate using temporary table  (actual time=76.9..76.9 rows=147 loops=1)
+                    -> Nested loop inner join  (cost=5141 rows=3790) (actual time=0.161..23.3 rows=10854 loops=1)
+                        -> Nested loop inner join  (cost=3814 rows=3790) (actual time=0.156..16.3 rows=10854 loops=1)
+                            -> Nested loop inner join  (cost=2488 rows=3790) (actual time=0.152..6.38 rows=10854 loops=1)
+                                -> Filter: (ps.durationMs < 60000)  (cost=1161 rows=3790) (actual time=0.145..3.35 rows=10854 loops=1)
+                                    -> Table scan on ps  (cost=1161 rows=11371) (actual time=0.145..2.59 rows=11371 loops=1)
+                                -> Single-row index lookup on r using PRIMARY (raceId=ps.raceId)  (cost=0.25 rows=1) (actual time=139e-6..159e-6 rows=1 loops=10854)
+                            -> Single-row index lookup on rr using PRIMARY (raceId=ps.raceId, driverId=ps.driverId)  (cost=0.25 rows=1) (actual time=769e-6..789e-6 rows=1 loops=10854)
+                        -> Single-row index lookup on con using PRIMARY (constructorId=rr.constructorId)  (cost=0.25 rows=1) (actual time=512e-6..533e-6 rows=1 loops=10854)

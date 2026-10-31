@@ -1,0 +1,33 @@
+Q4 BASELINE
+MySQL 8.4 EXPLAIN ANALYZE, captured from original experiment run.
+
+EXPLAIN ANALYZE
+SELECT d.forename,
+       d.surname,
+       COUNT(*)    AS fastestLaps,
+       MIN(r.year) AS firstYear,
+       MAX(r.year) AS lastYear
+FROM Lap l
+JOIN Race   r ON r.raceId   = l.raceId
+JOIN Driver d ON d.driverId = l.driverId
+WHERE l.lapTimeMs = (SELECT MIN(l2.lapTimeMs)
+                     FROM Lap l2
+                     WHERE l2.raceId = l.raceId)
+GROUP BY d.driverId, d.forename, d.surname
+ORDER BY fastestLaps DESC, d.surname
+LIMIT 15;
+
+=== CAPTURED MYSQL EXECUTION PLAN ===
+-> Limit: 15 row(s)  (actual time=151718..151718 rows=15 loops=1)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=151718..151718 rows=15 loops=1)
+        -> Table scan on <temporary>  (actual time=151718..151718 rows=50 loops=1)
+            -> Aggregate using temporary table  (actual time=151718..151718 rows=50 loops=1)
+                -> Nested loop inner join  (cost=412567 rows=915073) (actual time=27.6..151712 rows=544 loops=1)
+                    -> Nested loop inner join  (cost=92292 rows=915073) (actual time=27.6..151709 rows=544 loops=1)
+                        -> Covering index scan on r using year  (cost=83.2 rows=812) (actual time=0.0436..0.67 rows=812 loops=1)
+                        -> Filter: (l.lapTimeMs = (select #2))  (cost=1 rows=1127) (actual time=72.2..187 rows=0.67 loops=812)
+                            -> Index lookup on l using PRIMARY (raceId=r.raceId)  (cost=1 rows=1127) (actual time=0.0223..0.187 rows=725 loops=812)
+                            -> Select #2 (subquery in condition; dependent)
+                                -> Aggregate: min(l2.lapTimeMs)  (cost=226 rows=1) (actual time=0.257..0.257 rows=1 loops=589081)
+                                    -> Index lookup on l2 using PRIMARY (raceId=l.raceId)  (cost=114 rows=1127) (actual time=0.025..0.205 rows=1124 loops=589081)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=0.00491..0.00496 rows=1 loops=544)

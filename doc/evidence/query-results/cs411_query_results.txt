@@ -1,0 +1,72 @@
++-----------------------------------+
+| evidence_label                    |
++-----------------------------------+
+| Q1 Circuit Kings - TOP 15 RESULTS |
++-----------------------------------+
++----------------------------------------+----------+------------+------+
+| circuit                                | forename | surname    | wins |
++----------------------------------------+----------+------------+------+
+| Silverstone Circuit                    | Lewis    | Hamilton   |    9 |
+| Circuit de Nevers Magny-Cours          | Michael  | Schumacher |    8 |
+| Hungaroring                            | Lewis    | Hamilton   |    8 |
+| Autodromo Enzo e Dino Ferrari          | Michael  | Schumacher |    7 |
+| Circuit Gilles Villeneuve              | Lewis    | Hamilton   |    7 |
+| Circuit Gilles Villeneuve              | Michael  | Schumacher |    7 |
+| Circuit de Barcelona-Catalunya         | Michael  | Schumacher |    6 |
+| Circuit de Barcelona-Catalunya         | Lewis    | Hamilton   |    6 |
+| Circuit de Monaco                      | Ayrton   | Senna      |    6 |
+| Circuit de Spa-Francorchamps           | Michael  | Schumacher |    6 |
+| Shanghai International Circuit         | Lewis    | Hamilton   |    6 |
+| Suzuka Circuit                         | Michael  | Schumacher |    6 |
+| Autódromo Hermanos Rodríguez           | Max      | Verstappen |    5 |
+| Autódromo Internacional Nelson Piquet  | Alain    | Prost      |    5 |
+| Autodromo Nazionale di Monza           | Michael  | Schumacher |    5 |
++----------------------------------------+----------+------------+------+
++------------------------------------------+
+| evidence_label                           |
++------------------------------------------+
+| Q3 Pit Stop Performance - TOP 15 RESULTS |
++------------------------------------------+
++------+----------------+-------+------------+
+| year | constructor    | stops | avgStopSec |
++------+----------------+-------+------------+
+| 2024 | McLaren        |    77 |     23.921 |
+| 2024 | Alpine F1 Team |    71 |     24.221 |
+| 2024 | Mercedes       |    78 |     24.250 |
+| 2024 | Ferrari        |    75 |     24.301 |
+| 2024 | Red Bull       |    80 |     24.357 |
+| 2024 | Aston Martin   |    81 |     24.713 |
+| 2024 | RB F1 Team     |    72 |     24.734 |
+| 2023 | Ferrari        |    69 |     23.663 |
+| 2023 | Mercedes       |    80 |     23.882 |
+| 2023 | Red Bull       |    88 |     23.928 |
+| 2023 | Aston Martin   |    80 |     24.129 |
+| 2023 | AlphaTauri     |    83 |     24.539 |
+| 2022 | Red Bull       |    83 |     23.952 |
+| 2022 | Alpine F1 Team |    68 |     24.000 |
+| 2022 | Aston Martin   |    75 |     24.163 |
++------+----------------+-------+------------+
++---------------------------------------------+
+| evidence_label                              |
++---------------------------------------------+
+| Q4 Fastest Lap Specialists - TOP 15 RESULTS |
++---------------------------------------------+
++-----------+---------------+-------------+-----------+----------+
+| forename  | surname       | fastestLaps | firstYear | lastYear |
++-----------+---------------+-------------+-----------+----------+
+| Lewis     | Hamilton      |          66 |      2007 |     2024 |
+| Michael   | Schumacher    |          54 |      1996 |     2012 |
+| Kimi      | Räikkönen     |          45 |      2002 |     2018 |
+| Sebastian | Vettel        |          38 |      2009 |     2019 |
+| Max       | Verstappen    |          35 |      2016 |     2024 |
+| Fernando  | Alonso        |          26 |      2003 |     2024 |
+| Mika      | Häkkinen      |          25 |      1997 |     2001 |
+| Nico      | Rosberg       |          20 |      2006 |     2016 |
+| Valtteri  | Bottas        |          19 |      2014 |     2021 |
+| Mark      | Webber        |          19 |      2009 |     2013 |
+| Rubens    | Barrichello   |          17 |      2000 |     2009 |
+| Daniel    | Ricciardo     |          17 |      2014 |     2024 |
+| Felipe    | Massa         |          15 |      2006 |     2014 |
+| David     | Coulthard     |          14 |      1997 |     2002 |
+| Juan      | Pablo Montoya |          13 |      2001 |     2005 |
++-----------+---------------+-------------+-----------+----------+
