@@ -1,0 +1,53 @@
+experiment
+D1 ORIGINAL: no new Lap index
+EXPLAIN
+-> Limit: 15 row(s)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk
+        -> Table scan on <temporary>
+            -> Aggregate using temporary table
+                -> Nested loop inner join  (cost=412567 rows=915073)
+                    -> Nested loop inner join  (cost=92292 rows=915073)
+                        -> Covering index scan on r using year  (cost=83.2 rows=812)
+                        -> Filter: (l.lapTimeMs = (select #2))  (cost=1 rows=1127)
+                            -> Index lookup on l using PRIMARY (raceId=r.raceId)  (cost=1 rows=1127)
+                            -> Select #2 (subquery in condition; dependent)
+                                -> Aggregate: min(l2.lapTimeMs)  (cost=226 rows=1)
+                                    -> Index lookup on l2 using PRIMARY (raceId=l.raceId)  (cost=114 rows=1127)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1)
+
+experiment
+D2 ORIGINAL: composite index available, no hint
+EXPLAIN
+-> Limit: 15 row(s)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk
+        -> Table scan on <temporary>
+            -> Aggregate using temporary table
+                -> Nested loop inner join  (cost=396821 rows=874868)
+                    -> Nested loop inner join  (cost=90617 rows=874868)
+                        -> Covering index scan on r using year  (cost=83.2 rows=812)
+                        -> Filter: (l.lapTimeMs = (select #2))  (cost=3.89 rows=1077)
+                            -> Covering index lookup on l using idx_q4_probe (raceId=r.raceId)  (cost=3.89 rows=1077)
+                            -> Select #2 (subquery in condition; dependent)
+                                -> Aggregate: min(l2.lapTimeMs)  (cost=219 rows=1)
+                                    -> Covering index lookup on l2 using idx_q4_probe (raceId=l.raceId)  (cost=111 rows=1077)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1)
+
+experiment
+D3 ORIGINAL: force composite index in correlated subquery
+EXPLAIN
+-> Limit: 15 row(s)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk
+        -> Table scan on <temporary>
+            -> Aggregate using temporary table
+                -> Nested loop inner join  (cost=396821 rows=874868)
+                    -> Nested loop inner join  (cost=90617 rows=874868)
+                        -> Covering index scan on r using year  (cost=83.2 rows=812)
+                        -> Filter: (l.lapTimeMs = (select #2))  (cost=3.89 rows=1077)
+                            -> Covering index lookup on l using idx_q4_probe (raceId=r.raceId)  (cost=3.89 rows=1077)
+                            -> Select #2 (subquery in condition; dependent)
+                                -> Aggregate: min(l2.lapTimeMs)  (cost=219 rows=1)
+                                    -> Covering index lookup on l2 using idx_q4_probe (raceId=l.raceId)  (cost=111 rows=1077)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1)
+
+status
+DIAGNOSTICS END: idx_q4_probe removed

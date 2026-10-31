@@ -1,3 +1,5 @@
+> **Superseded:** This historical indexing analysis is retained for context. The complete and current Stage 3 submission is [Database Design.md](Database%20Design.md). Its original-Q4 evidence is supplementary; the official Q4 comparison uses the rewritten query.
+
 # Stage 3: Indexing Analysis (Team 058)
 
 This section is intended to be merged into `doc/Database Design.md` alongside the DDL, database evidence, and the top-15 advanced-query results. It documents *only* the indexing work for Q1, Q3, and Q4.

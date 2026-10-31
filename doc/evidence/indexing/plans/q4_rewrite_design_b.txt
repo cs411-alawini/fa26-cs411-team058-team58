@@ -1,0 +1,18 @@
+RB REWRITE DESIGN B
+EXPLAIN ANALYZE - Original MySQL execution plan
+
+-> Limit: 15 row(s)  (actual time=263..263 rows=15 loops=1)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=263..263 rows=15 loops=1)
+        -> Table scan on <temporary>  (actual time=263..263 rows=50 loops=1)
+            -> Aggregate using temporary table  (actual time=263..263 rows=50 loops=1)
+                -> Nested loop inner join  (cost=859136 rows=449220) (actual time=143..262 rows=544 loops=1)
+                    -> Nested loop inner join  (cost=701909 rows=449220) (actual time=143..262 rows=544 loops=1)
+                        -> Nested loop inner join  (cost=207767 rows=449220) (actual time=142..143 rows=544 loops=1)
+                            -> Filter: (best.bestLapTimeMs is not null)  (cost=90820..50540 rows=449220) (actual time=142..142 rows=544 loops=1)
+                                -> Table scan on best  (cost=90820..90830 rows=544) (actual time=142..142 rows=544 loops=1)
+                                    -> Materialize  (cost=90820..90820 rows=544) (actual time=142..142 rows=544 loops=1)
+                                        -> Group aggregate: min(Lap.lapTimeMs)  (cost=90766 rows=544) (actual time=0.96..142 rows=544 loops=1)
+                                            -> Index scan on Lap using PRIMARY  (cost=45844 rows=449220) (actual time=0.854..112 rows=589081 loops=1)
+                            -> Single-row index lookup on r using PRIMARY (raceId=best.raceId)  (cost=0.25 rows=1) (actual time=0.00139..0.00141 rows=1 loops=544)
+                        -> Covering index lookup on l using idx_q4_rewrite_b (lapTimeMs=best.bestLapTimeMs, raceId=best.raceId)  (cost=1 rows=1) (actual time=0.217..0.218 rows=1 loops=544)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=0.00125..0.00127 rows=1 loops=544)

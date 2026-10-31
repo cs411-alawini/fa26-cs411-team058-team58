@@ -199,78 +199,98 @@ ORDER BY r.year DESC, avgStopSec
 LIMIT 15;
 DROP INDEX idx_s3_q3_c ON PitStop;
 
--- ============ QUERY 4: BASELINE ============
-SELECT 'Q4 BASELINE' AS experiment;
-EXPLAIN ANALYZE SELECT d.forename,
+-- ============ QUERY 4: REWRITTEN Q4 BASELINE ============
+-- One per-race minimum is materialized, then matched back to Lap. Ties are retained.
+SELECT 'Q4 REWRITE BASELINE' AS experiment;
+EXPLAIN ANALYZE
+SELECT d.forename,
        d.surname,
-       COUNT(*)    AS fastestLaps,
+       COUNT(*) AS fastestLaps,
        MIN(r.year) AS firstYear,
        MAX(r.year) AS lastYear
 FROM Lap l
-JOIN Race   r ON r.raceId   = l.raceId
+JOIN (
+    SELECT raceId, MIN(lapTimeMs) AS bestLapTimeMs
+    FROM Lap
+    GROUP BY raceId
+) best ON best.raceId = l.raceId
+      AND best.bestLapTimeMs = l.lapTimeMs
+JOIN Race r ON r.raceId = l.raceId
 JOIN Driver d ON d.driverId = l.driverId
-WHERE l.lapTimeMs = (SELECT MIN(l2.lapTimeMs)
-                     FROM Lap l2
-                     WHERE l2.raceId = l.raceId)
 GROUP BY d.driverId, d.forename, d.surname
 ORDER BY fastestLaps DESC, d.surname
 LIMIT 15;
 
--- ------------ QUERY 4: INDEX A (Find candidate fastest lap times) ------------
-CREATE INDEX idx_s3_q4_a ON Lap(lapTimeMs);
-SELECT 'Q4 DESIGN A: idx_s3_q4_a ON Lap(lapTimeMs)' AS experiment;
-EXPLAIN ANALYZE SELECT d.forename,
+-- ------------ QUERY 4: REWRITE DESIGN A ------------
+CREATE INDEX idx_q4_rewrite_a ON Lap(raceId, lapTimeMs);
+SELECT 'Q4 REWRITE DESIGN A: Lap(raceId, lapTimeMs)' AS experiment;
+EXPLAIN ANALYZE
+SELECT d.forename,
        d.surname,
-       COUNT(*)    AS fastestLaps,
+       COUNT(*) AS fastestLaps,
        MIN(r.year) AS firstYear,
        MAX(r.year) AS lastYear
 FROM Lap l
-JOIN Race   r ON r.raceId   = l.raceId
+JOIN (
+    SELECT raceId, MIN(lapTimeMs) AS bestLapTimeMs
+    FROM Lap
+    GROUP BY raceId
+) best ON best.raceId = l.raceId
+      AND best.bestLapTimeMs = l.lapTimeMs
+JOIN Race r ON r.raceId = l.raceId
 JOIN Driver d ON d.driverId = l.driverId
-WHERE l.lapTimeMs = (SELECT MIN(l2.lapTimeMs)
-                     FROM Lap l2
-                     WHERE l2.raceId = l.raceId)
 GROUP BY d.driverId, d.forename, d.surname
 ORDER BY fastestLaps DESC, d.surname
 LIMIT 15;
-DROP INDEX idx_s3_q4_a ON Lap;
 
--- ------------ QUERY 4: INDEX B (Time first, race second) ------------
-CREATE INDEX idx_s3_q4_b ON Lap(lapTimeMs, raceId);
-SELECT 'Q4 DESIGN B: idx_s3_q4_b ON Lap(lapTimeMs, raceId)' AS experiment;
-EXPLAIN ANALYZE SELECT d.forename,
-       d.surname,
-       COUNT(*)    AS fastestLaps,
-       MIN(r.year) AS firstYear,
-       MAX(r.year) AS lastYear
-FROM Lap l
-JOIN Race   r ON r.raceId   = l.raceId
-JOIN Driver d ON d.driverId = l.driverId
-WHERE l.lapTimeMs = (SELECT MIN(l2.lapTimeMs)
-                     FROM Lap l2
-                     WHERE l2.raceId = l.raceId)
-GROUP BY d.driverId, d.forename, d.surname
-ORDER BY fastestLaps DESC, d.surname
-LIMIT 15;
-DROP INDEX idx_s3_q4_b ON Lap;
+DROP INDEX idx_q4_rewrite_a ON Lap;
 
--- ------------ QUERY 4: INDEX C (Find minimum lap time within race) ------------
-CREATE INDEX idx_s3_q4_c ON Lap(raceId, lapTimeMs);
-SELECT 'Q4 DESIGN C: idx_s3_q4_c ON Lap(raceId, lapTimeMs)' AS experiment;
-EXPLAIN ANALYZE SELECT d.forename,
+-- ------------ QUERY 4: REWRITE DESIGN B ------------
+CREATE INDEX idx_q4_rewrite_b ON Lap(lapTimeMs, raceId);
+SELECT 'Q4 REWRITE DESIGN B: Lap(lapTimeMs, raceId)' AS experiment;
+EXPLAIN ANALYZE
+SELECT d.forename,
        d.surname,
-       COUNT(*)    AS fastestLaps,
+       COUNT(*) AS fastestLaps,
        MIN(r.year) AS firstYear,
        MAX(r.year) AS lastYear
 FROM Lap l
-JOIN Race   r ON r.raceId   = l.raceId
+JOIN (
+    SELECT raceId, MIN(lapTimeMs) AS bestLapTimeMs
+    FROM Lap
+    GROUP BY raceId
+) best ON best.raceId = l.raceId
+      AND best.bestLapTimeMs = l.lapTimeMs
+JOIN Race r ON r.raceId = l.raceId
 JOIN Driver d ON d.driverId = l.driverId
-WHERE l.lapTimeMs = (SELECT MIN(l2.lapTimeMs)
-                     FROM Lap l2
-                     WHERE l2.raceId = l.raceId)
 GROUP BY d.driverId, d.forename, d.surname
 ORDER BY fastestLaps DESC, d.surname
 LIMIT 15;
-DROP INDEX idx_s3_q4_c ON Lap;
+
+DROP INDEX idx_q4_rewrite_b ON Lap;
+
+-- ------------ QUERY 4: REWRITE DESIGN C ------------
+CREATE INDEX idx_q4_rewrite_c ON Lap(raceId, driverId, lapTimeMs);
+SELECT 'Q4 REWRITE DESIGN C: Lap(raceId, driverId, lapTimeMs)' AS experiment;
+EXPLAIN ANALYZE
+SELECT d.forename,
+       d.surname,
+       COUNT(*) AS fastestLaps,
+       MIN(r.year) AS firstYear,
+       MAX(r.year) AS lastYear
+FROM Lap l
+JOIN (
+    SELECT raceId, MIN(lapTimeMs) AS bestLapTimeMs
+    FROM Lap
+    GROUP BY raceId
+) best ON best.raceId = l.raceId
+      AND best.bestLapTimeMs = l.lapTimeMs
+JOIN Race r ON r.raceId = l.raceId
+JOIN Driver d ON d.driverId = l.driverId
+GROUP BY d.driverId, d.forename, d.surname
+ORDER BY fastestLaps DESC, d.surname
+LIMIT 15;
+
+DROP INDEX idx_q4_rewrite_c ON Lap;
 
 SELECT 'END: all experimental indexes removed' AS result;

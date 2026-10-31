@@ -87,18 +87,21 @@ LIMIT 15;
 
 -- Q4. Fastest-lap specialists: how often each driver set a race's fastest lap.
 --     "Who has set the most fastest laps since 1996?"
---     Concepts: JOINs + GROUP BY + correlated subquery (per-race minimum lap).
+--     Concepts: JOINs + GROUP BY + derived-table aggregation (per-race minimum lap).
 SELECT d.forename,
        d.surname,
-       COUNT(*)    AS fastestLaps,
+       COUNT(*) AS fastestLaps,
        MIN(r.year) AS firstYear,
        MAX(r.year) AS lastYear
 FROM Lap l
-JOIN Race   r ON r.raceId   = l.raceId
+JOIN (
+    SELECT raceId, MIN(lapTimeMs) AS bestLapTimeMs
+    FROM Lap
+    GROUP BY raceId
+) best ON best.raceId = l.raceId
+      AND best.bestLapTimeMs = l.lapTimeMs
+JOIN Race r ON r.raceId = l.raceId
 JOIN Driver d ON d.driverId = l.driverId
-WHERE l.lapTimeMs = (SELECT MIN(l2.lapTimeMs)
-                     FROM Lap l2
-                     WHERE l2.raceId = l.raceId)
 GROUP BY d.driverId, d.forename, d.surname
 ORDER BY fastestLaps DESC, d.surname
 LIMIT 15;

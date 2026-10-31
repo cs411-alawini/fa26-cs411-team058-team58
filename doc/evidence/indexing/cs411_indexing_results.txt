@@ -1,22 +1,33 @@
-SERVER AND ORIGINAL INDEXES	8.4.11-google
-RaceResult	0	PRIMARY	1	raceId	A	793	NULL	NULL		BTREE			YES	NULL
-RaceResult	0	PRIMARY	2	driverId	A	19208	NULL	NULL		BTREE			YES	NULL
-RaceResult	1	driverId	1	driverId	A	292	NULL	NULL		BTREE			YES	NULL
-RaceResult	1	constructorId	1	constructorId	A	77	NULL	NULL		BTREE			YES	NULL
-PitStop	0	PRIMARY	1	raceId	A	285	NULL	NULL		BTREE			YES	NULL
-PitStop	0	PRIMARY	2	driverId	A	5575	NULL	NULL		BTREE			YES	NULL
-PitStop	0	PRIMARY	3	lapNumber	A	11371	NULL	NULL		BTREE			YES	NULL
-Lap	0	PRIMARY	1	raceId	A	544	NULL	NULL		BTREE			YES	NULL
-Lap	0	PRIMARY	2	driverId	A	9901	NULL	NULL		BTREE			YES	NULL
-Lap	0	PRIMARY	3	lapNumber	A	597519	NULL	NULL		BTREE			YES	NULL
-lights_out_trivia.RaceResult	analyze	status	OK
-lights_out_trivia.Race	analyze	status	OK
-lights_out_trivia.Circuit	analyze	status	OK
-lights_out_trivia.Driver	analyze	status	OK
-lights_out_trivia.PitStop	analyze	status	OK
-lights_out_trivia.Constructor	analyze	status	OK
-lights_out_trivia.Lap	analyze	status	OK
+CS 411 Stage 3 official indexing plan outputs
+Costs are read from the outermost Nested loop inner join iterator.
+
+===== Q1 baseline =====
 Q1 BASELINE
+MySQL 8.4 EXPLAIN ANALYZE, captured from original experiment run.
+
+EXPLAIN ANALYZE
+SELECT c.name    AS circuit,
+       d.forename,
+       d.surname,
+       COUNT(*)  AS wins
+FROM RaceResult rr
+JOIN Race    r ON r.raceId    = rr.raceId
+JOIN Circuit c ON c.circuitId = r.circuitId
+JOIN Driver  d ON d.driverId  = rr.driverId
+WHERE rr.finishPosition = 1
+GROUP BY c.circuitId, c.name, d.driverId, d.forename, d.surname
+HAVING COUNT(*) = (SELECT COUNT(*)
+                   FROM RaceResult rr2
+                   JOIN Race r2 ON r2.raceId = rr2.raceId
+                   WHERE rr2.finishPosition = 1
+                     AND r2.circuitId = c.circuitId
+                   GROUP BY rr2.driverId
+                   ORDER BY COUNT(*) DESC
+                   LIMIT 1)
+ORDER BY wins DESC, circuit
+LIMIT 15;
+
+=== CAPTURED MYSQL EXECUTION PLAN ===
 -> Limit: 15 row(s)  (actual time=106..106 rows=15 loops=1)
     -> Sort: wins DESC, c.`name`  (actual time=106..106 rows=15 loops=1)
         -> Filter: (`count(0)` = `(select #2)`)  (actual time=106..106 rows=81 loops=1)
@@ -31,7 +42,33 @@ Q1 BASELINE
                                 -> Index lookup on rr using PRIMARY (raceId=r.raceId)  (cost=0.268 rows=26.7) (actual time=0.00455..0.00702 rows=23.7 loops=812)
                         -> Single-row index lookup on d using PRIMARY (driverId=rr.driverId)  (cost=0.25 rows=1) (actual time=932e-6..957e-6 rows=1 loops=812)
 
+===== Q1 design A =====
 Q1 DESIGN A: idx_s3_q1_a ON RaceResult(finishPosition)
+MySQL 8.4 EXPLAIN ANALYZE, captured from original experiment run.
+
+EXPLAIN ANALYZE
+SELECT c.name    AS circuit,
+       d.forename,
+       d.surname,
+       COUNT(*)  AS wins
+FROM RaceResult rr
+JOIN Race    r ON r.raceId    = rr.raceId
+JOIN Circuit c ON c.circuitId = r.circuitId
+JOIN Driver  d ON d.driverId  = rr.driverId
+WHERE rr.finishPosition = 1
+GROUP BY c.circuitId, c.name, d.driverId, d.forename, d.surname
+HAVING COUNT(*) = (SELECT COUNT(*)
+                   FROM RaceResult rr2
+                   JOIN Race r2 ON r2.raceId = rr2.raceId
+                   WHERE rr2.finishPosition = 1
+                     AND r2.circuitId = c.circuitId
+                   GROUP BY rr2.driverId
+                   ORDER BY COUNT(*) DESC
+                   LIMIT 1)
+ORDER BY wins DESC, circuit
+LIMIT 15;
+
+=== CAPTURED MYSQL EXECUTION PLAN ===
 -> Limit: 15 row(s)  (actual time=32.4..32.4 rows=15 loops=1)
     -> Sort: wins DESC, c.`name`  (actual time=32.4..32.4 rows=15 loops=1)
         -> Filter: (`count(0)` = `(select #2)`)  (actual time=32.3..32.4 rows=81 loops=1)
@@ -45,7 +82,33 @@ Q1 DESIGN A: idx_s3_q1_a ON RaceResult(finishPosition)
                             -> Single-row index lookup on c using PRIMARY (circuitId=r.circuitId)  (cost=0.25 rows=1) (actual time=849e-6..869e-6 rows=1 loops=812)
                         -> Single-row index lookup on d using PRIMARY (driverId=rr.driverId)  (cost=0.25 rows=1) (actual time=790e-6..813e-6 rows=1 loops=812)
 
+===== Q1 design B =====
 Q1 DESIGN B: idx_s3_q1_b ON RaceResult(finishPosition, raceId)
+MySQL 8.4 EXPLAIN ANALYZE, captured from original experiment run.
+
+EXPLAIN ANALYZE
+SELECT c.name    AS circuit,
+       d.forename,
+       d.surname,
+       COUNT(*)  AS wins
+FROM RaceResult rr
+JOIN Race    r ON r.raceId    = rr.raceId
+JOIN Circuit c ON c.circuitId = r.circuitId
+JOIN Driver  d ON d.driverId  = rr.driverId
+WHERE rr.finishPosition = 1
+GROUP BY c.circuitId, c.name, d.driverId, d.forename, d.surname
+HAVING COUNT(*) = (SELECT COUNT(*)
+                   FROM RaceResult rr2
+                   JOIN Race r2 ON r2.raceId = rr2.raceId
+                   WHERE rr2.finishPosition = 1
+                     AND r2.circuitId = c.circuitId
+                   GROUP BY rr2.driverId
+                   ORDER BY COUNT(*) DESC
+                   LIMIT 1)
+ORDER BY wins DESC, circuit
+LIMIT 15;
+
+=== CAPTURED MYSQL EXECUTION PLAN ===
 -> Limit: 15 row(s)  (actual time=32.2..32.3 rows=15 loops=1)
     -> Sort: wins DESC, c.`name`  (actual time=32.2..32.3 rows=15 loops=1)
         -> Filter: (`count(0)` = `(select #2)`)  (actual time=32.1..32.2 rows=81 loops=1)
@@ -59,7 +122,33 @@ Q1 DESIGN B: idx_s3_q1_b ON RaceResult(finishPosition, raceId)
                             -> Single-row index lookup on c using PRIMARY (circuitId=r.circuitId)  (cost=0.25 rows=1) (actual time=819e-6..839e-6 rows=1 loops=812)
                         -> Single-row index lookup on d using PRIMARY (driverId=rr.driverId)  (cost=0.25 rows=1) (actual time=755e-6..781e-6 rows=1 loops=812)
 
+===== Q1 design C =====
 Q1 DESIGN C: idx_s3_q1_c ON RaceResult(finishPosition, driverId, raceId)
+MySQL 8.4 EXPLAIN ANALYZE, captured from original experiment run.
+
+EXPLAIN ANALYZE
+SELECT c.name    AS circuit,
+       d.forename,
+       d.surname,
+       COUNT(*)  AS wins
+FROM RaceResult rr
+JOIN Race    r ON r.raceId    = rr.raceId
+JOIN Circuit c ON c.circuitId = r.circuitId
+JOIN Driver  d ON d.driverId  = rr.driverId
+WHERE rr.finishPosition = 1
+GROUP BY c.circuitId, c.name, d.driverId, d.forename, d.surname
+HAVING COUNT(*) = (SELECT COUNT(*)
+                   FROM RaceResult rr2
+                   JOIN Race r2 ON r2.raceId = rr2.raceId
+                   WHERE rr2.finishPosition = 1
+                     AND r2.circuitId = c.circuitId
+                   GROUP BY rr2.driverId
+                   ORDER BY COUNT(*) DESC
+                   LIMIT 1)
+ORDER BY wins DESC, circuit
+LIMIT 15;
+
+=== CAPTURED MYSQL EXECUTION PLAN ===
 -> Limit: 15 row(s)  (actual time=101..101 rows=15 loops=1)
     -> Sort: wins DESC, c.`name`  (actual time=101..101 rows=15 loops=1)
         -> Filter: (`count(0)` = `(select #2)`)  (actual time=100..100 rows=81 loops=1)
@@ -73,7 +162,31 @@ Q1 DESIGN C: idx_s3_q1_c ON RaceResult(finishPosition, driverId, raceId)
                             -> Single-row index lookup on c using PRIMARY (circuitId=r.circuitId)  (cost=0.25 rows=1) (actual time=863e-6..883e-6 rows=1 loops=812)
                         -> Single-row index lookup on d using PRIMARY (driverId=rr.driverId)  (cost=0.25 rows=1) (actual time=194e-6..226e-6 rows=1 loops=812)
 
+===== Q3 baseline =====
 Q3 BASELINE
+MySQL 8.4 EXPLAIN ANALYZE, captured from original experiment run.
+
+EXPLAIN ANALYZE
+SELECT r.year,
+       con.name                        AS constructor,
+       COUNT(*)                        AS stops,
+       ROUND(AVG(ps.durationMs) / 1000, 3) AS avgStopSec
+FROM PitStop ps
+JOIN RaceResult  rr  ON rr.raceId = ps.raceId AND rr.driverId = ps.driverId
+JOIN Race        r   ON r.raceId  = ps.raceId
+JOIN Constructor con ON con.constructorId = rr.constructorId
+WHERE ps.durationMs < 60000
+GROUP BY r.year, con.constructorId, con.name
+HAVING COUNT(*) >= 20
+   AND AVG(ps.durationMs) < (SELECT AVG(ps2.durationMs)
+                             FROM PitStop ps2
+                             JOIN Race r2 ON r2.raceId = ps2.raceId
+                             WHERE r2.year = r.year
+                               AND ps2.durationMs < 60000)
+ORDER BY r.year DESC, avgStopSec
+LIMIT 15;
+
+=== CAPTURED MYSQL EXECUTION PLAN ===
 -> Limit: 15 row(s)  (actual time=77..77 rows=15 loops=1)
     -> Sort: r.`year` DESC, avgStopSec  (actual time=77..77 rows=15 loops=1)
         -> Filter: ((`count(0)` >= 20) and (??? < `(select #2)`))  (actual time=76.9..76.9 rows=84 loops=1)
@@ -88,7 +201,31 @@ Q3 BASELINE
                             -> Single-row index lookup on rr using PRIMARY (raceId=ps.raceId, driverId=ps.driverId)  (cost=0.25 rows=1) (actual time=769e-6..789e-6 rows=1 loops=10854)
                         -> Single-row index lookup on con using PRIMARY (constructorId=rr.constructorId)  (cost=0.25 rows=1) (actual time=512e-6..533e-6 rows=1 loops=10854)
 
+===== Q3 design A =====
 Q3 DESIGN A: idx_s3_q3_a ON PitStop(durationMs)
+MySQL 8.4 EXPLAIN ANALYZE, captured from original experiment run.
+
+EXPLAIN ANALYZE
+SELECT r.year,
+       con.name                        AS constructor,
+       COUNT(*)                        AS stops,
+       ROUND(AVG(ps.durationMs) / 1000, 3) AS avgStopSec
+FROM PitStop ps
+JOIN RaceResult  rr  ON rr.raceId = ps.raceId AND rr.driverId = ps.driverId
+JOIN Race        r   ON r.raceId  = ps.raceId
+JOIN Constructor con ON con.constructorId = rr.constructorId
+WHERE ps.durationMs < 60000
+GROUP BY r.year, con.constructorId, con.name
+HAVING COUNT(*) >= 20
+   AND AVG(ps.durationMs) < (SELECT AVG(ps2.durationMs)
+                             FROM PitStop ps2
+                             JOIN Race r2 ON r2.raceId = ps2.raceId
+                             WHERE r2.year = r.year
+                               AND ps2.durationMs < 60000)
+ORDER BY r.year DESC, avgStopSec
+LIMIT 15;
+
+=== CAPTURED MYSQL EXECUTION PLAN ===
 -> Limit: 15 row(s)  (actual time=99.9..99.9 rows=15 loops=1)
     -> Sort: r.`year` DESC, avgStopSec  (actual time=99.9..99.9 rows=15 loops=1)
         -> Filter: ((`count(0)` >= 20) and (??? < `(select #2)`))  (actual time=99.8..99.8 rows=84 loops=1)
@@ -103,7 +240,31 @@ Q3 DESIGN A: idx_s3_q3_a ON PitStop(durationMs)
                             -> Single-row index lookup on rr using PRIMARY (raceId=ps.raceId, driverId=ps.driverId)  (cost=0.25 rows=1) (actual time=0.00132..0.00134 rows=1 loops=10854)
                         -> Single-row index lookup on con using PRIMARY (constructorId=rr.constructorId)  (cost=0.25 rows=1) (actual time=921e-6..941e-6 rows=1 loops=10854)
 
+===== Q3 design B =====
 Q3 DESIGN B: idx_s3_q3_b ON PitStop(durationMs, raceId)
+MySQL 8.4 EXPLAIN ANALYZE, captured from original experiment run.
+
+EXPLAIN ANALYZE
+SELECT r.year,
+       con.name                        AS constructor,
+       COUNT(*)                        AS stops,
+       ROUND(AVG(ps.durationMs) / 1000, 3) AS avgStopSec
+FROM PitStop ps
+JOIN RaceResult  rr  ON rr.raceId = ps.raceId AND rr.driverId = ps.driverId
+JOIN Race        r   ON r.raceId  = ps.raceId
+JOIN Constructor con ON con.constructorId = rr.constructorId
+WHERE ps.durationMs < 60000
+GROUP BY r.year, con.constructorId, con.name
+HAVING COUNT(*) >= 20
+   AND AVG(ps.durationMs) < (SELECT AVG(ps2.durationMs)
+                             FROM PitStop ps2
+                             JOIN Race r2 ON r2.raceId = ps2.raceId
+                             WHERE r2.year = r.year
+                               AND ps2.durationMs < 60000)
+ORDER BY r.year DESC, avgStopSec
+LIMIT 15;
+
+=== CAPTURED MYSQL EXECUTION PLAN ===
 -> Limit: 15 row(s)  (actual time=104..104 rows=15 loops=1)
     -> Sort: r.`year` DESC, avgStopSec  (actual time=104..104 rows=15 loops=1)
         -> Filter: ((`count(0)` >= 20) and (??? < `(select #2)`))  (actual time=104..104 rows=84 loops=1)
@@ -118,7 +279,31 @@ Q3 DESIGN B: idx_s3_q3_b ON PitStop(durationMs, raceId)
                             -> Single-row index lookup on rr using PRIMARY (raceId=ps.raceId, driverId=ps.driverId)  (cost=0.25 rows=1) (actual time=0.00144..0.00146 rows=1 loops=10854)
                         -> Single-row index lookup on con using PRIMARY (constructorId=rr.constructorId)  (cost=0.25 rows=1) (actual time=994e-6..0.00102 rows=1 loops=10854)
 
+===== Q3 design C =====
 Q3 DESIGN C: idx_s3_q3_c ON PitStop(raceId, durationMs)
+MySQL 8.4 EXPLAIN ANALYZE, captured from original experiment run.
+
+EXPLAIN ANALYZE
+SELECT r.year,
+       con.name                        AS constructor,
+       COUNT(*)                        AS stops,
+       ROUND(AVG(ps.durationMs) / 1000, 3) AS avgStopSec
+FROM PitStop ps
+JOIN RaceResult  rr  ON rr.raceId = ps.raceId AND rr.driverId = ps.driverId
+JOIN Race        r   ON r.raceId  = ps.raceId
+JOIN Constructor con ON con.constructorId = rr.constructorId
+WHERE ps.durationMs < 60000
+GROUP BY r.year, con.constructorId, con.name
+HAVING COUNT(*) >= 20
+   AND AVG(ps.durationMs) < (SELECT AVG(ps2.durationMs)
+                             FROM PitStop ps2
+                             JOIN Race r2 ON r2.raceId = ps2.raceId
+                             WHERE r2.year = r.year
+                               AND ps2.durationMs < 60000)
+ORDER BY r.year DESC, avgStopSec
+LIMIT 15;
+
+=== CAPTURED MYSQL EXECUTION PLAN ===
 -> Limit: 15 row(s)  (actual time=89.1..89.1 rows=15 loops=1)
     -> Sort: r.`year` DESC, avgStopSec  (actual time=89.1..89.1 rows=15 loops=1)
         -> Filter: ((`count(0)` >= 20) and (??? < `(select #2)`))  (actual time=89..89.1 rows=84 loops=1)
@@ -133,64 +318,81 @@ Q3 DESIGN C: idx_s3_q3_c ON PitStop(raceId, durationMs)
                             -> Single-row index lookup on rr using PRIMARY (raceId=ps.raceId, driverId=ps.driverId)  (cost=0.25 rows=1) (actual time=0.00135..0.00137 rows=1 loops=10854)
                         -> Single-row index lookup on con using PRIMARY (constructorId=rr.constructorId)  (cost=0.25 rows=1) (actual time=910e-6..930e-6 rows=1 loops=10854)
 
-Q4 BASELINE
--> Limit: 15 row(s)  (actual time=151718..151718 rows=15 loops=1)
-    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=151718..151718 rows=15 loops=1)
-        -> Table scan on <temporary>  (actual time=151718..151718 rows=50 loops=1)
-            -> Aggregate using temporary table  (actual time=151718..151718 rows=50 loops=1)
-                -> Nested loop inner join  (cost=412567 rows=915073) (actual time=27.6..151712 rows=544 loops=1)
-                    -> Nested loop inner join  (cost=92292 rows=915073) (actual time=27.6..151709 rows=544 loops=1)
-                        -> Covering index scan on r using year  (cost=83.2 rows=812) (actual time=0.0436..0.67 rows=812 loops=1)
-                        -> Filter: (l.lapTimeMs = (select #2))  (cost=1 rows=1127) (actual time=72.2..187 rows=0.67 loops=812)
-                            -> Index lookup on l using PRIMARY (raceId=r.raceId)  (cost=1 rows=1127) (actual time=0.0223..0.187 rows=725 loops=812)
-                            -> Select #2 (subquery in condition; dependent)
-                                -> Aggregate: min(l2.lapTimeMs)  (cost=226 rows=1) (actual time=0.257..0.257 rows=1 loops=589081)
-                                    -> Index lookup on l2 using PRIMARY (raceId=l.raceId)  (cost=114 rows=1127) (actual time=0.025..0.205 rows=1124 loops=589081)
-                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=0.00491..0.00496 rows=1 loops=544)
+===== Rewritten Q4 baseline =====
+R0 REWRITE BASELINE
+EXPLAIN ANALYZE - Original MySQL execution plan
 
-Q4 DESIGN A: idx_s3_q4_a ON Lap(lapTimeMs)
--> Limit: 15 row(s)  (actual time=150017..150017 rows=15 loops=1)
-    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=150017..150017 rows=15 loops=1)
-        -> Table scan on <temporary>  (actual time=150017..150017 rows=50 loops=1)
-            -> Aggregate using temporary table  (actual time=150017..150017 rows=50 loops=1)
-                -> Nested loop inner join  (cost=412567 rows=915073) (actual time=27..150011 rows=544 loops=1)
-                    -> Nested loop inner join  (cost=92292 rows=915073) (actual time=27..150008 rows=544 loops=1)
-                        -> Covering index scan on r using year  (cost=83.2 rows=812) (actual time=0.0424..0.673 rows=812 loops=1)
-                        -> Filter: (l.lapTimeMs = (select #2))  (cost=1 rows=1127) (actual time=71.5..185 rows=0.67 loops=812)
-                            -> Index lookup on l using PRIMARY (raceId=r.raceId)  (cost=1 rows=1127) (actual time=0.0221..0.188 rows=725 loops=812)
-                            -> Select #2 (subquery in condition; dependent)
-                                -> Aggregate: min(l2.lapTimeMs)  (cost=226 rows=1) (actual time=0.254..0.254 rows=1 loops=589081)
-                                    -> Index lookup on l2 using PRIMARY (raceId=l.raceId)  (cost=114 rows=1127) (actual time=0.025..0.203 rows=1124 loops=589081)
-                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=0.005..0.00505 rows=1 loops=544)
+-> Limit: 15 row(s)  (actual time=308..308 rows=15 loops=1)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=308..308 rows=15 loops=1)
+        -> Table scan on <temporary>  (actual time=308..308 rows=50 loops=1)
+            -> Aggregate using temporary table  (actual time=308..308 rows=50 loops=1)
+                -> Nested loop inner join  (cost=9.84e+6 rows=44922) (actual time=145..308 rows=544 loops=1)
+                    -> Nested loop inner join  (cost=562266 rows=44922) (actual time=145..307 rows=544 loops=1)
+                        -> Nested loop inner join  (cost=203189 rows=544) (actual time=145..145 rows=544 loops=1)
+                            -> Table scan on best  (cost=90820..90830 rows=544) (actual time=145..145 rows=544 loops=1)
+                                -> Materialize  (cost=90820..90820 rows=544) (actual time=145..145 rows=544 loops=1)
+                                    -> Group aggregate: min(Lap.lapTimeMs)  (cost=90766 rows=544) (actual time=0.946..144 rows=544 loops=1)
+                                        -> Index scan on Lap using PRIMARY  (cost=45844 rows=449220) (actual time=0.836..114 rows=589081 loops=1)
+                            -> Single-row index lookup on r using PRIMARY (raceId=best.raceId)  (cost=0.25 rows=1) (actual time=0.00129..0.00131 rows=1 loops=544)
+                        -> Filter: (l.lapTimeMs = best.bestLapTimeMs)  (cost=0.699 rows=82.6) (actual time=0.131..0.297 rows=1 loops=544)
+                            -> Index lookup on l using PRIMARY (raceId=best.raceId)  (cost=0.699 rows=826) (actual time=0.0306..0.251 rows=1083 loops=544)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=984e-6..0.001 rows=1 loops=544)
 
-Q4 DESIGN B: idx_s3_q4_b ON Lap(lapTimeMs, raceId)
--> Limit: 15 row(s)  (actual time=149217..149217 rows=15 loops=1)
-    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=149217..149217 rows=15 loops=1)
-        -> Table scan on <temporary>  (actual time=149217..149217 rows=50 loops=1)
-            -> Aggregate using temporary table  (actual time=149217..149217 rows=50 loops=1)
-                -> Nested loop inner join  (cost=412567 rows=915073) (actual time=27.1..149212 rows=544 loops=1)
-                    -> Nested loop inner join  (cost=92292 rows=915073) (actual time=27.1..149209 rows=544 loops=1)
-                        -> Covering index scan on r using year  (cost=83.2 rows=812) (actual time=0.0426..0.629 rows=812 loops=1)
-                        -> Filter: (l.lapTimeMs = (select #2))  (cost=1 rows=1127) (actual time=71.1..184 rows=0.67 loops=812)
-                            -> Index lookup on l using PRIMARY (raceId=r.raceId)  (cost=1 rows=1127) (actual time=0.0219..0.187 rows=725 loops=812)
-                            -> Select #2 (subquery in condition; dependent)
-                                -> Aggregate: min(l2.lapTimeMs)  (cost=226 rows=1) (actual time=0.253..0.253 rows=1 loops=589081)
-                                    -> Index lookup on l2 using PRIMARY (raceId=l.raceId)  (cost=114 rows=1127) (actual time=0.025..0.202 rows=1124 loops=589081)
-                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=0.0047..0.00475 rows=1 loops=544)
+===== Rewritten Q4 design A =====
+RA REWRITE DESIGN A
+EXPLAIN ANALYZE - Original MySQL execution plan
 
-Q4 DESIGN C: idx_s3_q4_c ON Lap(raceId, lapTimeMs)
--> Limit: 15 row(s)  (actual time=149341..149341 rows=15 loops=1)
-    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=149341..149341 rows=15 loops=1)
-        -> Table scan on <temporary>  (actual time=149341..149341 rows=50 loops=1)
-            -> Aggregate using temporary table  (actual time=149341..149341 rows=50 loops=1)
-                -> Nested loop inner join  (cost=412567 rows=915073) (actual time=26.9..149335 rows=544 loops=1)
-                    -> Nested loop inner join  (cost=92292 rows=915073) (actual time=26.9..149332 rows=544 loops=1)
-                        -> Covering index scan on r using year  (cost=83.2 rows=812) (actual time=0.0437..0.685 rows=812 loops=1)
-                        -> Filter: (l.lapTimeMs = (select #2))  (cost=1 rows=1127) (actual time=71.2..184 rows=0.67 loops=812)
-                            -> Index lookup on l using PRIMARY (raceId=r.raceId)  (cost=1 rows=1127) (actual time=0.0219..0.187 rows=725 loops=812)
-                            -> Select #2 (subquery in condition; dependent)
-                                -> Aggregate: min(l2.lapTimeMs)  (cost=226 rows=1) (actual time=0.253..0.253 rows=1 loops=589081)
-                                    -> Index lookup on l2 using PRIMARY (raceId=l.raceId)  (cost=114 rows=1127) (actual time=0.025..0.202 rows=1124 loops=589081)
-                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=0.00492..0.00497 rows=1 loops=544)
+-> Limit: 15 row(s)  (actual time=154..154 rows=15 loops=1)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=154..154 rows=15 loops=1)
+        -> Table scan on <temporary>  (actual time=154..154 rows=50 loops=1)
+            -> Aggregate using temporary table  (actual time=154..154 rows=50 loops=1)
+                -> Nested loop inner join  (cost=1041 rows=543) (actual time=151..154 rows=544 loops=1)
+                    -> Nested loop inner join  (cost=851 rows=543) (actual time=151..153 rows=544 loops=1)
+                        -> Nested loop inner join  (cost=254 rows=543) (actual time=151..151 rows=544 loops=1)
+                            -> Filter: (best.bestLapTimeMs is not null)  (cost=786..63.6 rows=543) (actual time=151..151 rows=544 loops=1)
+                                -> Table scan on best  (cost=787..797 rows=543) (actual time=151..151 rows=544 loops=1)
+                                    -> Materialize  (cost=787..787 rows=543) (actual time=151..151 rows=544 loops=1)
+                                        -> Covering index skip scan for grouping on Lap using idx_q4_rewrite_a  (cost=733 rows=543) (actual time=0.557..150 rows=544 loops=1)
+                            -> Single-row index lookup on r using PRIMARY (raceId=best.raceId)  (cost=0.25 rows=1) (actual time=0.00118..0.0012 rows=1 loops=544)
+                        -> Covering index lookup on l using idx_q4_rewrite_a (raceId=best.raceId, lapTimeMs=best.bestLapTimeMs)  (cost=1 rows=1) (actual time=0.00285..0.00326 rows=1 loops=544)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=881e-6..901e-6 rows=1 loops=544)
 
-END: all experimental indexes removed
+===== Rewritten Q4 design B =====
+RB REWRITE DESIGN B
+EXPLAIN ANALYZE - Original MySQL execution plan
+
+-> Limit: 15 row(s)  (actual time=263..263 rows=15 loops=1)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=263..263 rows=15 loops=1)
+        -> Table scan on <temporary>  (actual time=263..263 rows=50 loops=1)
+            -> Aggregate using temporary table  (actual time=263..263 rows=50 loops=1)
+                -> Nested loop inner join  (cost=859136 rows=449220) (actual time=143..262 rows=544 loops=1)
+                    -> Nested loop inner join  (cost=701909 rows=449220) (actual time=143..262 rows=544 loops=1)
+                        -> Nested loop inner join  (cost=207767 rows=449220) (actual time=142..143 rows=544 loops=1)
+                            -> Filter: (best.bestLapTimeMs is not null)  (cost=90820..50540 rows=449220) (actual time=142..142 rows=544 loops=1)
+                                -> Table scan on best  (cost=90820..90830 rows=544) (actual time=142..142 rows=544 loops=1)
+                                    -> Materialize  (cost=90820..90820 rows=544) (actual time=142..142 rows=544 loops=1)
+                                        -> Group aggregate: min(Lap.lapTimeMs)  (cost=90766 rows=544) (actual time=0.96..142 rows=544 loops=1)
+                                            -> Index scan on Lap using PRIMARY  (cost=45844 rows=449220) (actual time=0.854..112 rows=589081 loops=1)
+                            -> Single-row index lookup on r using PRIMARY (raceId=best.raceId)  (cost=0.25 rows=1) (actual time=0.00139..0.00141 rows=1 loops=544)
+                        -> Covering index lookup on l using idx_q4_rewrite_b (lapTimeMs=best.bestLapTimeMs, raceId=best.raceId)  (cost=1 rows=1) (actual time=0.217..0.218 rows=1 loops=544)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=0.00125..0.00127 rows=1 loops=544)
+
+===== Rewritten Q4 design C =====
+RC REWRITE DESIGN C
+EXPLAIN ANALYZE - Original MySQL execution plan
+
+-> Limit: 15 row(s)  (actual time=519..519 rows=15 loops=1)
+    -> Sort: fastestLaps DESC, d.surname, limit input to 15 row(s) per chunk  (actual time=519..519 rows=15 loops=1)
+        -> Table scan on <temporary>  (actual time=519..519 rows=50 loops=1)
+            -> Aggregate using temporary table  (actual time=519..519 rows=50 loops=1)
+                -> Nested loop inner join  (cost=10.6e+6 rows=42948) (actual time=363..518 rows=544 loops=1)
+                    -> Nested loop inner join  (cost=1.78e+6 rows=42948) (actual time=363..517 rows=544 loops=1)
+                        -> Nested loop inner join  (cost=203189 rows=544) (actual time=363..364 rows=544 loops=1)
+                            -> Table scan on best  (cost=90820..90830 rows=544) (actual time=363..363 rows=544 loops=1)
+                                -> Materialize  (cost=90820..90820 rows=544) (actual time=363..363 rows=544 loops=1)
+                                    -> Group aggregate: min(Lap.lapTimeMs)  (cost=90766 rows=544) (actual time=3.74..363 rows=544 loops=1)
+                                        -> Covering index scan on Lap using idx_q4_rewrite_c  (cost=45844 rows=449220) (actual time=3.61..332 rows=589081 loops=1)
+                            -> Single-row index lookup on r using PRIMARY (raceId=best.raceId)  (cost=0.25 rows=1) (actual time=0.00141..0.00143 rows=1 loops=544)
+                        -> Filter: (l.lapTimeMs = best.bestLapTimeMs)  (cost=3.4 rows=78.9) (actual time=0.111..0.282 rows=1 loops=544)
+                            -> Covering index lookup on l using idx_q4_rewrite_c (raceId=best.raceId)  (cost=3.4 rows=789) (actual time=0.026..0.23 rows=1083 loops=544)
+                    -> Single-row index lookup on d using PRIMARY (driverId=l.driverId)  (cost=0.25 rows=1) (actual time=0.00104..0.00106 rows=1 loops=544)

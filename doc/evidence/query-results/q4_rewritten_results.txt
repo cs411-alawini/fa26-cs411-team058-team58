@@ -1,0 +1,24 @@
++-----------------------------------------------------+
+| evidence_label                                      |
++-----------------------------------------------------+
+| Q4 Fastest Lap Specialists - REWRITTEN SQL - TOP 15 |
++-----------------------------------------------------+
++-----------+---------------+-------------+-----------+----------+
+| forename  | surname       | fastestLaps | firstYear | lastYear |
++-----------+---------------+-------------+-----------+----------+
+| Lewis     | Hamilton      |          66 |      2007 |     2024 |
+| Michael   | Schumacher    |          54 |      1996 |     2012 |
+| Kimi      | Räikkönen     |          45 |      2002 |     2018 |
+| Sebastian | Vettel        |          38 |      2009 |     2019 |
+| Max       | Verstappen    |          35 |      2016 |     2024 |
+| Fernando  | Alonso        |          26 |      2003 |     2024 |
+| Mika      | Häkkinen      |          25 |      1997 |     2001 |
+| Nico      | Rosberg       |          20 |      2006 |     2016 |
+| Valtteri  | Bottas        |          19 |      2014 |     2021 |
+| Mark      | Webber        |          19 |      2009 |     2013 |
+| Rubens    | Barrichello   |          17 |      2000 |     2009 |
+| Daniel    | Ricciardo     |          17 |      2014 |     2024 |
+| Felipe    | Massa         |          15 |      2006 |     2014 |
+| David     | Coulthard     |          14 |      1997 |     2002 |
+| Juan      | Pablo Montoya |          13 |      2001 |     2005 |
++-----------+---------------+-------------+-----------+----------+
