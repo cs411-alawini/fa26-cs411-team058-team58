@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lights Out Trivia</title>
+<link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+body {
+    margin: 0;
+    font-family: 'Titillium Web', Arial, sans-serif;
+    background-color: #15151e;
+    color: #f1f1f1;
+}
+
+.topbar {
+    background-color: #e10600;
+    padding: 20px 40px;
+    border-bottom: 4px solid #fff;
+}
+.topbar h1 {
+    margin: 0;
+    font-size: 32px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.topbar p {
+  margin: 4px 0 0 0;
+  font-size: 15px;
+}
+#status {
+    font-size: 13px;
+    margin-top: 8px;
+    color: #ffd7d5;
+}
+
+.container {
+    width: 1000px;
+    max-width: 95%;
+    margin: 30px auto;
+}
+
+.stats {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+.stat-box {
+    flex: 1;
+    background: #1f1f2b;
+    border-left: 4px solid #e10600;
+    padding: 12px 16px;
+}
+.stat-box .number {
+  font-size: 28px;
+  font-weight: 700;
+}
+.stat-box .label {
+    font-size: 13px;
+    color: #9a9aa8;
+    text-transform: uppercase;
+}
+
+.section {
+    background: #1f1f2b;
+    padding: 20px 25px;
+    margin-bottom: 25px;
+    border-radius: 6px;
+}
+.section h2 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    font-size: 22px;
+    text-transform: uppercase;
+}
+.section .desc {
+    color: #9a9aa8;
+    margin-top: 0;
+    font-size: 14px;
+}
+
+input {
+    padding: 9px;
+    font-family: inherit;
+    font-size: 15px;
+    background: #2b2b3a;
+    border: 1px solid #3c3c4e;
+    color: white;
+    border-radius: 4px;
+}
+input:focus {
+    outline: none;
+    border-color: #e10600;
+}
+
+button {
+    padding: 9px 18px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+    background-color: #e10600;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+button:hover {
+    background-color: #ff1e15;
+}
+.btn-grey {
+    background-color: #44445a;
+}
+.btn-grey:hover { background-color: #55556e; }
+.btn-small {
+    padding: 5px 12px;
+    font-size: 14px;
+}
+
+.form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.form-row input { flex: 1; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+th {
+    text-align: left;
+    color: #9a9aa8;
+    font-size: 13px;
+    text-transform: uppercase;
+    padding: 8px;
+    border-bottom: 2px solid #3c3c4e;
+}
+td {
+    padding: 9px 8px;
+    border-bottom: 1px solid #2e2e3e;
+}
+tr:hover td { background: #262634; }
+.right { text-align: right; }
+
+.msg {
+    color: #9a9aa8;
+    margin-top: 12px;
+}
+.error { color: #ff6b6b; }
+
+#notice {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #2b2b3a;
+    border-left: 4px solid #2ecc71;
+    padding: 10px 18px;
+    display: none;
+}
+
+footer {
+    text-align: center;
+    color: #6c6c7a;
+    font-size: 13px;
+    padding-bottom: 30px;
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1>Lights Out Trivia</h1>
+</div>
+
+<div class="container">
+
+    <div class="stats">
+        <div class="stat-box"><div class="number" id="drivers">-</div><div class="label">Drivers</div></div>
+        <div class="stat-box"><div class="number" id="races">-</div><div class="label">Races</div></div>
+        <div class="stat-box"><div class="number" id="circuits">-</div><div class="label">Circuits</div></div>
+        <div class="stat-box"><div class="number" id="constructors">-</div><div class="label">Constructors</div></div>
+    </div>
+
+    <div class="section">
+        <h2>Driver Search</h2>
+        <p class="desc">Search for a driver to see their total race wins.</p>
+        <div class="form-row">
+            <input type="text" id="searchBox" placeholder="Enter a driver name">
+            <button onclick="searchDrivers()" style="flex:0">Search</button>
+        </div>
+        <div id="driverResults"></div>
+    </div>
+
+    <div class="section">
+        <h2>Circuit Kings</h2>
+        <p class="desc">Driver with the most wins at each circuit. Ties show up as separate rows.</p>
+        <button onclick="circuitKings()">Run Query</button>
+        <div id="kingsResults"></div>
+    </div>
+
+    <div class="section">
+        <h2>My Quizzes</h2>
+        <p class="desc">Create a custom quiz, edit it or delete it.</p>
+        <div class="form-row">
+            <input type="text" id="title" placeholder="Quiz title" style="flex:2">
+            <input type="text" id="category" placeholder="Category">
+            <input type="number" id="startYear" placeholder="Start year">
+            <input type="number" id="endYear" placeholder="End year">
+        </div>
+        <div class="form-row">
+            <input type="text" id="description" placeholder="Description (optional)">
+            <button onclick="createQuiz()" style="flex:0; white-space:nowrap">Create Quiz</button>
+        </div>
+        <div id="quizList"></div>
+    </div>
+
+</div>
+
+<footer>CS 411 - Team 058 (JOINtheDarkSide)</footer>
+<div id="notice"></div>
+
+<script>
+var allQuizzes = [];
+
+function showNotice(text, isError) {
+    var box = document.getElementById("notice");
+    box.innerText = text;
+    box.style.borderLeftColor = isError ? "#ff6b6b" : "#2ecc71";
+    box.style.display = "block";
+    setTimeout(function() { box.style.display = "none"; }, 2500);
+}
+
+function clean(text) {
+    if (text === null || text === undefined) return "";
+    return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+async function getJSON(url, options) {
+    var res = await fetch(url, options);
+    var data = await res.json();
+    if (!res.ok) {
+        throw new Error(data.error || "Request failed");
+    }
+    return data;
+}
+
+async function loadStats() {
+    try {
+        var data = await getJSON("/api/health");
+        document.getElementById("drivers").innerText = data.drivers.toLocaleString();
+        document.getElementById("races").innerText = data.races.toLocaleString();
+        document.getElementById("circuits").innerText = data.circuits;
+        document.getElementById("constructors").innerText = data.constructors;
+    } catch (err) {
+        showNotice("Could not connect to database: " + err.message, true);
+    }
+}
+
+async function searchDrivers() {
+    var name = document.getElementById("searchBox").value.trim();
+    var out = document.getElementById("driverResults");
+    if (name == "") {
+        showNotice("Please type a driver name", true);
+        return;
+    }
+    out.innerHTML = "<p class='msg'>Searching...</p>";
+    try {
+        var drivers = await getJSON("/api/drivers?q=" + encodeURIComponent(name));
+        if (drivers.length == 0) {
+            out.innerHTML = "<p class='msg'>No drivers found.</p>";
+            return;
+        }
+        var html = "<table><tr><th>Name</th><th>Code</th><th>Nationality</th><th>Date of Birth</th><th class='right'>Wins</th></tr>";
+        for (var i = 0; i < drivers.length; i++) {
+            var d = drivers[i];
+            html += "<tr>";
+            html += "<td>" + clean(d.forename) + " " + clean(d.surname) + "</td>";
+            html += "<td>" + clean(d.code) + "</td>";
+            html += "<td>" + clean(d.nationality) + "</td>";
+            html += "<td>" + clean(d.dateOfBirth) + "</td>";
+            html += "<td class='right'>" + d.wins + "</td>";
+            html += "</tr>";
+        }
+        html += "</table>";
+        out.innerHTML = html;
+    } catch (err) {
+        out.innerHTML = "<p class='msg error'>" + clean(err.message) + "</p>";
+    }
+}
+
+async function circuitKings() {
+    var out = document.getElementById("kingsResults");
+    out.innerHTML = "<p class='msg'>Running query...</p>";
+    try {
+        var rows = await getJSON("/api/circuit-kings");
+        var html = "<table><tr><th>#</th><th>Circuit</th><th>Driver</th><th class='right'>Wins</th></tr>";
+        for (var i = 0; i < rows.length; i++) {
+            html += "<tr><td>" + (i + 1) + "</td><td>" + clean(rows[i].circuit) + "</td>";
+            html += "<td>" + clean(rows[i].forename) + " " + clean(rows[i].surname) + "</td>";
+            html += "<td class='right'>" + rows[i].wins + "</td></tr>";
+        }
+        html += "</table>";
+        out.innerHTML = html;
+    } catch (err) {
+        out.innerHTML = "<p class='msg error'>" + clean(err.message) + "</p>";
+    }
+}
+
+async function loadQuizzes() {
+    try {
+        allQuizzes = await getJSON("/api/quizzes");
+        showQuizzes(null);
+    } catch (err) {
+        showNotice(err.message, true);
+    }
+}
+
+function showQuizzes(editingId) {
+    var out = document.getElementById("quizList");
+    if (allQuizzes.length == 0) {
+        out.innerHTML = "<p class='msg'>No quizzes yet.</p>";
+        return;
+    }
+    var html = "<table><tr><th>ID</th><th>Title</th><th>Category</th><th>Years</th><th>Description</th><th></th></tr>";
+    for (var i = 0; i < allQuizzes.length; i++) {
+        var q = allQuizzes[i];
+        var years = "";
+        if (q.eraStartYear || q.eraEndYear) {
+            years = (q.eraStartYear || "?") + " - " + (q.eraEndYear || "?");
+        }
+        html += "<tr><td>" + q.quizId + "</td>";
+        if (q.quizId == editingId) {
+            html += "<td><input type='text' id='editTitle' value=\"" + clean(q.title) + "\"></td>";
+            html += "<td>" + clean(q.category) + "</td><td>" + years + "</td>";
+            html += "<td><input type='text' id='editDesc' value=\"" + clean(q.description) + "\"></td>";
+            html += "<td class='right'><button class='btn-small' onclick='saveQuiz(" + q.quizId + ")'>Save</button> ";
+            html += "<button class='btn-small btn-grey' onclick='showQuizzes(null)'>Cancel</button></td>";
+        } else {
+            html += "<td>" + clean(q.title) + "</td><td>" + clean(q.category) + "</td><td>" + years + "</td>";
+            html += "<td>" + clean(q.description) + "</td>";
+            html += "<td class='right'><button class='btn-small btn-grey' onclick='showQuizzes(" + q.quizId + ")'>Edit</button> ";
+            html += "<button class='btn-small' onclick='deleteQuiz(" + q.quizId + ")'>Delete</button></td>";
+        }
+        html += "</tr>";
+    }
+    html += "</table>";
+    out.innerHTML = html;
+}
+
+async function createQuiz() {
+    var quiz = {
+        title: document.getElementById("title").value,
+        category: document.getElementById("category").value,
+        description: document.getElementById("description").value,
+        eraStartYear: document.getElementById("startYear").value,
+        eraEndYear: document.getElementById("endYear").value
+    };
+    if (quiz.title.trim() == "") {
+        showNotice("Quiz title is required", true);
+        return;
+    }
+    try {
+        var result = await getJSON("/api/quizzes", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(quiz)
+        });
+        document.getElementById("title").value = "";
+        document.getElementById("category").value = "";
+        document.getElementById("description").value = "";
+        document.getElementById("startYear").value = "";
+        document.getElementById("endYear").value = "";
+        showNotice("Quiz " + result.quizId + " created");
+        loadQuizzes();
+    } catch (err) {
+        showNotice(err.message, true);
+    }
+}
+
+async function saveQuiz(id) {
+    var newTitle = document.getElementById("editTitle").value;
+    var newDesc = document.getElementById("editDesc").value;
+    try {
+        await getJSON("/api/quizzes/" + id, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: newTitle, description: newDesc })
+        });
+        showNotice("Quiz " + id + " updated");
+        loadQuizzes();
+    } catch (err) {
+        showNotice(err.message, true);
+    }
+}
+
+async function deleteQuiz(id) {
+    if (!confirm("Are you sure you want to delete quiz " + id + "?")) {
+        return;
+    }
+    try {
+        await getJSON("/api/quizzes/" + id, { method: "DELETE" });
+        showNotice("Quiz " + id + " deleted");
+        loadQuizzes();
+    } catch (err) {
+        showNotice(err.message, true);
+    }
+}
+
+document.getElementById("searchBox").addEventListener("keyup", function(e) {
+    if (e.key == "Enter") searchDrivers();
+});
+
+loadStats();
+loadQuizzes();
+</script>
+
+</body>
+</html>
